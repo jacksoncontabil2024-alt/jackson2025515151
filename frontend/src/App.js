@@ -614,6 +614,7 @@ function App() {
                           <SelectItem value="cartao">Cartão</SelectItem>
                           <SelectItem value="dinheiro">Dinheiro</SelectItem>
                           <SelectItem value="marcar">Marcar</SelectItem>
+                          <SelectItem value="pagou_conta">Pagou a Conta</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
