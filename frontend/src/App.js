@@ -1265,10 +1265,10 @@ function App() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-4xl font-bold mb-2">
-                        R$ {(reports.pix.total + reports.cartao.total + reports.dinheiro.total + reports.pago.total + reports.vem_retirar.total + reports.marcar.total).toFixed(2)}
+                        R$ {(reports.pix.total + reports.cartao.total + reports.dinheiro.total + reports.pago.total + reports.vem_retirar.total + reports.marcar.total + reports.pagou_conta.total).toFixed(2)}
                       </div>
                       <div className="text-sm text-blue-100">
-                        {reports.pix.count + reports.cartao.count + reports.dinheiro.count + reports.pago.count + reports.vem_retirar.count + reports.marcar.count} entregas totais
+                        {reports.pix.count + reports.cartao.count + reports.dinheiro.count + reports.pago.count + reports.vem_retirar.count + reports.marcar.count + reports.pagou_conta.count} entregas totais
                       </div>
                     </CardContent>
                   </Card>
