@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { Download, DollarSign, Package, Users, TrendingUp, TrendingDown, Clock, CheckCircle, XCircle, Trash2, Plus, Edit, BarChart3, CreditCard, Wallet, Smartphone } from "lucide-react";
