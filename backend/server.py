@@ -104,6 +104,12 @@ class DeliveryUpdate(BaseModel):
     horaEntregue: Optional[str] = None
     cancelado: Optional[bool] = None
     delivererId: Optional[str] = None
+    marcadoPix: Optional[bool] = None
+    marcadoCartao: Optional[bool] = None
+    marcadoDinheiro: Optional[bool] = None
+    marcadoPago: Optional[bool] = None
+    marcadoVemRetirar: Optional[bool] = None
+    marcadoMarcar: Optional[bool] = None
 
 
 # Deliverer Model
