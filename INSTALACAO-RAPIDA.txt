@@ -1,0 +1,41 @@
+╔══════════════════════════════════════════════════════════╗
+║                                                          ║
+║    CUPIM NA TELHA - Sistema de Gestão de Entregas       ║
+║              INSTALAÇÃO RÁPIDA                           ║
+║                                                          ║
+╚══════════════════════════════════════════════════════════╝
+
+📋 REQUISITOS:
+──────────────
+  1. Docker Desktop instalado
+     Download: https://www.docker.com/products/docker-desktop
+
+🚀 INSTALAÇÃO (3 PASSOS):
+──────────────────────────
+  1. Descompacte esta pasta
+  2. Certifique-se que o Docker Desktop está rodando
+  3. Execute o arquivo de inicialização:
+
+     Windows:  Duplo clique em "start-cupim.bat"
+     Mac/Linux: Execute "./start-cupim.sh"
+
+✅ PRONTO!
+──────────
+  O sistema abrirá em: http://localhost:3000
+
+⏹️ PARAR O SISTEMA:
+────────────────────
+     Windows:  Duplo clique em "stop-cupim.bat"
+     Mac/Linux: Execute "./stop-cupim.sh"
+
+📚 DOCUMENTAÇÃO COMPLETA:
+──────────────────────────
+  Leia o arquivo "README.md" para mais detalhes
+
+💡 DICA:
+─────────
+  O sistema funciona 100% OFFLINE.
+  Todos os dados são salvos localmente.
+
+🎉 Boa gestão!
+
