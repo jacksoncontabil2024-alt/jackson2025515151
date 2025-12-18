@@ -286,7 +286,8 @@ function App() {
         'dinheiro': 'marcadoDinheiro',
         'pago': 'marcadoPago',
         'vem_retirar': 'marcadoVemRetirar',
-        'marcar': 'marcadoMarcar'
+        'marcar': 'marcadoMarcar',
+        'pagou_conta': 'marcadoPagouConta'
       };
       
       const field = fieldMap[paymentMethod];
