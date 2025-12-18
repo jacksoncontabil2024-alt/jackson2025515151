@@ -1595,6 +1595,7 @@ function App() {
               <table className="w-full border-collapse text-sm">
                 <thead className="bg-gray-100 sticky top-0">
                   <tr>
+                    <th className="border p-2 text-center w-12">✓</th>
                     <th className="border p-2 text-left">#</th>
                     <th className="border p-2 text-left">Cliente</th>
                     <th className="border p-2 text-left">Valor</th>
@@ -1607,36 +1608,62 @@ function App() {
                   {deliveries
                     .filter(d => d.paymentMethod === reportDetailMethod && !d.cancelado)
                     .sort((a, b) => b.seq - a.seq)
-                    .map(delivery => (
-                      <tr key={delivery.id} className="hover:bg-gray-50">
-                        <td className="border p-2">
-                          <Badge variant="outline">#{delivery.seq}</Badge>
-                        </td>
-                        <td className="border p-2 font-semibold">{delivery.clientName}</td>
-                        <td className="border p-2">R$ {delivery.amount.toFixed(2)}</td>
-                        <td className="border p-2 text-xs max-w-[200px] truncate" title={delivery.observation}>
-                          {delivery.observation || '-'}
-                        </td>
-                        <td className="border p-2">
-                          {delivery.foiEntregue ? (
-                            <Badge className="bg-green-500">Entregue</Badge>
-                          ) : delivery.saiuParaEntrega ? (
-                            <Badge className="bg-blue-500">Em Entrega</Badge>
-                          ) : (
-                            <Badge className="bg-yellow-500">Pendente</Badge>
-                          )}
-                        </td>
-                        <td className="border p-2 text-xs">
-                          {new Date(delivery.datetime).toLocaleString('pt-BR', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </td>
-                      </tr>
-                    ))}
+                    .map(delivery => {
+                      const getMarcadoStatus = () => {
+                        switch(reportDetailMethod) {
+                          case 'pix': return delivery.marcadoPix;
+                          case 'cartao': return delivery.marcadoCartao;
+                          case 'dinheiro': return delivery.marcadoDinheiro;
+                          case 'pago': return delivery.marcadoPago;
+                          case 'vem_retirar': return delivery.marcadoVemRetirar;
+                          case 'marcar': return delivery.marcadoMarcar;
+                          default: return false;
+                        }
+                      };
+                      
+                      const isMarcado = getMarcadoStatus();
+                      
+                      return (
+                        <tr 
+                          key={delivery.id} 
+                          className={`hover:bg-gray-50 transition-colors ${isMarcado ? 'bg-green-100' : ''}`}
+                        >
+                          <td className="border p-2 text-center">
+                            <Checkbox
+                              checked={isMarcado}
+                              onCheckedChange={() => handleToggleMarcado(delivery.id, reportDetailMethod, isMarcado)}
+                              className="mx-auto"
+                            />
+                          </td>
+                          <td className="border p-2">
+                            <Badge variant="outline">#{delivery.seq}</Badge>
+                          </td>
+                          <td className="border p-2 font-semibold">{delivery.clientName}</td>
+                          <td className="border p-2">R$ {delivery.amount.toFixed(2)}</td>
+                          <td className="border p-2 text-xs max-w-[200px] truncate" title={delivery.observation}>
+                            {delivery.observation || '-'}
+                          </td>
+                          <td className="border p-2">
+                            {delivery.foiEntregue ? (
+                              <Badge className="bg-green-500">Entregue</Badge>
+                            ) : delivery.saiuParaEntrega ? (
+                              <Badge className="bg-blue-500">Em Entrega</Badge>
+                            ) : (
+                              <Badge className="bg-yellow-500">Pendente</Badge>
+                            )}
+                          </td>
+                          <td className="border p-2 text-xs">
+                            {new Date(delivery.datetime).toLocaleString('pt-BR', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
               {deliveries.filter(d => d.paymentMethod === reportDetailMethod && !d.cancelado).length === 0 && (
