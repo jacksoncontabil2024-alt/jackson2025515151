@@ -111,6 +111,7 @@ class DeliveryUpdate(BaseModel):
     marcadoPago: Optional[bool] = None
     marcadoVemRetirar: Optional[bool] = None
     marcadoMarcar: Optional[bool] = None
+    marcadoPagouConta: Optional[bool] = None
 
 
 # Deliverer Model
