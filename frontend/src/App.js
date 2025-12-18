@@ -1654,6 +1654,7 @@ function App() {
                           case 'pago': return delivery.marcadoPago;
                           case 'vem_retirar': return delivery.marcadoVemRetirar;
                           case 'marcar': return delivery.marcadoMarcar;
+                          case 'pagou_conta': return delivery.marcadoPagouConta;
                           default: return false;
                         }
                       };
