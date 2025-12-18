@@ -272,6 +272,31 @@ function App() {
     }
   };
 
+  // Toggle marcado status based on payment method
+  const handleToggleMarcado = async (deliveryId, paymentMethod, currentStatus) => {
+    try {
+      const fieldMap = {
+        'pix': 'marcadoPix',
+        'cartao': 'marcadoCartao',
+        'dinheiro': 'marcadoDinheiro',
+        'pago': 'marcadoPago',
+        'vem_retirar': 'marcadoVemRetirar',
+        'marcar': 'marcadoMarcar'
+      };
+      
+      const field = fieldMap[paymentMethod];
+      if (!field) return;
+      
+      await axios.patch(`${API}/deliveries/${deliveryId}`, {
+        [field]: !currentStatus
+      });
+      
+      loadData();
+    } catch (error) {
+      toast.error("Erro ao marcar entrega");
+    }
+  };
+
   // Deliverer handlers
   const handleAddDeliverer = async (e) => {
     e.preventDefault();
