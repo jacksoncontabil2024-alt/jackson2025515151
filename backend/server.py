@@ -73,6 +73,12 @@ class Delivery(BaseModel):
     horaEntregue: Optional[str] = None
     cancelado: bool = False
     delivererId: Optional[str] = None
+    marcadoPix: bool = False
+    marcadoCartao: bool = False
+    marcadoDinheiro: bool = False
+    marcadoPago: bool = False
+    marcadoVemRetirar: bool = False
+    marcadoMarcar: bool = False
 
 class DeliveryCreate(BaseModel):
     clientName: str
