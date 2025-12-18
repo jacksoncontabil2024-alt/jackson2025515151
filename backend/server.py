@@ -79,7 +79,7 @@ class Delivery(BaseModel):
     marcadoPago: bool = False
     marcadoVemRetirar: bool = False
     marcadoMarcar: bool = False
-    marcadoPagouContaLista: bool = False
+    marcadoPagouConta: bool = False
 
 class DeliveryCreate(BaseModel):
     clientName: str
