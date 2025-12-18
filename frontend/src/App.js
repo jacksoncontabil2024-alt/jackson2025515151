@@ -125,6 +125,10 @@ function App() {
     marcar: {
       total: deliveries.filter(d => d.paymentMethod === "marcar" && !d.cancelado).reduce((acc, d) => acc + d.amount, 0),
       count: deliveries.filter(d => d.paymentMethod === "marcar" && !d.cancelado).length
+    },
+    pagou_conta: {
+      total: deliveries.filter(d => d.paymentMethod === "pagou_conta" && !d.cancelado).reduce((acc, d) => acc + d.amount, 0),
+      count: deliveries.filter(d => d.paymentMethod === "pagou_conta" && !d.cancelado).length
     }
   };
 
