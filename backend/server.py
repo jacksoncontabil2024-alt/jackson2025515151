@@ -452,8 +452,8 @@ async def export_reports_pdf():
     elements.append(Spacer(1, 0.3*inch))
     
     # Calculate totals by payment method
-    methods = ["pix", "cartao", "dinheiro", "pago", "vem_retirar", "marcar"]
-    method_names = {"pix": "PIX", "cartao": "Cartão", "dinheiro": "Dinheiro", "pago": "Já Pago", "vem_retirar": "Vem Retirar", "marcar": "Marcar"}
+    methods = ["pix", "cartao", "dinheiro", "pago", "vem_retirar", "marcar", "pagou_conta"]
+    method_names = {"pix": "PIX", "cartao": "Cartão", "dinheiro": "Dinheiro", "pago": "Pago", "vem_retirar": "Vem Retirar", "marcar": "Marcar", "pagou_conta": "Pagou a Conta"}
     
     data = [["Forma de Pagamento", "Total (R$)", "Quantidade"]]
     total_geral = 0
