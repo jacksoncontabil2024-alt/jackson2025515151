@@ -1618,7 +1618,7 @@ function App() {
               Detalhes - {reportDetailMethod === 'pix' ? 'PIX' : 
                          reportDetailMethod === 'cartao' ? 'Cartão' :
                          reportDetailMethod === 'dinheiro' ? 'Dinheiro' :
-                         reportDetailMethod === 'pago' ? 'Já Pago' :
+                         reportDetailMethod === 'pago' ? 'Pago' :
                          reportDetailMethod === 'vem_retirar' ? 'Vem Retirar' :
                          reportDetailMethod === 'marcar' ? 'Marcar' :
                          reportDetailMethod === 'pagou_conta' ? 'Pagou a Conta' : ''}
