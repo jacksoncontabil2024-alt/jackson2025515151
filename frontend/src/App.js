@@ -1006,7 +1006,7 @@ function App() {
                           const deliverer = deliverers.find(d => d.id === delivery.delivererId);
                           const valorAReceber = delivery.paymentMethod === "dinheiro" && delivery.valorRecebido 
                             ? `R$ ${delivery.valorRecebido.toFixed(2)} (Troco: R$ ${delivery.troco?.toFixed(2)})`
-                            : delivery.paymentMethod === "pago" ? "Já Pago" 
+                            : delivery.paymentMethod === "pago" ? "Pago" 
                             : delivery.paymentMethod === "vem_retirar" ? "Pagar ao Retirar"
                             : `R$ ${delivery.amount.toFixed(2)}`;
                           
