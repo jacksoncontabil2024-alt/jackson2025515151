@@ -395,7 +395,7 @@ async def export_summary_pdf():
     
     for delivery in deliveries:
         valor_a_receber = f"R$ {delivery.get('valorRecebido', 0):.2f} (Troco: R$ {delivery.get('troco', 0):.2f})" if delivery.get('paymentMethod') == "dinheiro" and delivery.get('valorRecebido') else (
-            "Já Pago" if delivery.get('paymentMethod') == "pago" else (
+            "Pago" if delivery.get('paymentMethod') == "pago" else (
                 "Pagar ao Retirar" if delivery.get('paymentMethod') == "vem_retirar" else f"R$ {delivery.get('amount', 0):.2f}"
             )
         )
