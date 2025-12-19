@@ -1825,7 +1825,7 @@ function App() {
                       <SelectItem value="pix">PIX</SelectItem>
                       <SelectItem value="cartao">Cartão</SelectItem>
                       <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                      <SelectItem value="pago">Já Pago</SelectItem>
+                      <SelectItem value="pago">Pago</SelectItem>
                       <SelectItem value="vem_retirar">Vem Retirar</SelectItem>
                       <SelectItem value="marcar">Marcar</SelectItem>
                       <SelectItem value="pagou_conta">Pagou a Conta</SelectItem>
