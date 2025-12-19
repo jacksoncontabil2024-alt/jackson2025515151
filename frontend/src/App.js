@@ -1155,7 +1155,7 @@ function App() {
                     </CardContent>
                   </Card>
 
-                  {/* Já Pago */}
+                  {/* Pago */}
                   <Card 
                     className="bg-gradient-to-br from-amber-50 to-amber-100 border-2 border-amber-300 shadow-lg hover:shadow-xl transition-all cursor-pointer"
                     onClick={() => setReportDetailMethod('pago')}
@@ -1164,7 +1164,7 @@ function App() {
                     <CardHeader className="pb-3">
                       <CardTitle className="flex items-center gap-2 text-amber-700">
                         <CheckCircle className="h-6 w-6" />
-                        Já Pago
+                        Pago
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
