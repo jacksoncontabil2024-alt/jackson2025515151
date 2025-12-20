@@ -1020,9 +1020,17 @@ function App() {
                                 <Badge variant="outline">#{delivery.seq}</Badge>
                               </td>
                               <td className="border p-2 font-semibold">{delivery.clientName}</td>
-                              <td className="border p-2">R$ {delivery.amount.toFixed(2)}</td>
+                              <td className="border p-2">
+                                R$ {(delivery.amount + (delivery.amount2 || 0)).toFixed(2)}
+                              </td>
                               <td className="border p-2">
                                 <Badge variant="secondary">{delivery.paymentMethod.toUpperCase()}</Badge>
+                                {delivery.paymentMethod2 && (
+                                  <>
+                                    {' + '}
+                                    <Badge variant="secondary">{delivery.paymentMethod2.toUpperCase()}</Badge>
+                                  </>
+                                )}
                               </td>
                               <td className="border p-2">{valorAReceber}</td>
                               <td className="border p-2">{deliverer ? deliverer.name : "-"}</td>
