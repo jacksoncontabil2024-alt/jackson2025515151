@@ -397,6 +397,8 @@ function App() {
       if (matchesMultipleNumbers) {
         const matchesStatus = statusFilter === "all" ? true :
                              statusFilter === "pending" ? (!d.foiEntregue && !d.cancelado) :
+                             statusFilter === "only_pending" ? (!d.foiEntregue && !d.cancelado && !d.saiuParaEntrega) :
+                             statusFilter === "only_out" ? (!d.foiEntregue && !d.cancelado && d.saiuParaEntrega) :
                              statusFilter === "completed" ? d.foiEntregue :
                              statusFilter === "cancelled" ? d.cancelado : true;
         const matchesDeliverer = delivererFilter === "all" ? true : d.delivererId === delivererFilter;
@@ -410,6 +412,8 @@ function App() {
                          d.seq.toString().includes(searchTerm);
     const matchesStatus = statusFilter === "all" ? true :
                          statusFilter === "pending" ? (!d.foiEntregue && !d.cancelado) :
+                         statusFilter === "only_pending" ? (!d.foiEntregue && !d.cancelado && !d.saiuParaEntrega) :
+                         statusFilter === "only_out" ? (!d.foiEntregue && !d.cancelado && d.saiuParaEntrega) :
                          statusFilter === "completed" ? d.foiEntregue :
                          statusFilter === "cancelled" ? d.cancelado : true;
     const matchesDeliverer = delivererFilter === "all" ? true : d.delivererId === delivererFilter;
