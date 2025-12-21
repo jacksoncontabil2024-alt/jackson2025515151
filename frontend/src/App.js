@@ -684,7 +684,9 @@ function App() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todos</SelectItem>
-                        <SelectItem value="pending">Pendentes</SelectItem>
+                        <SelectItem value="pending">Pendentes e Em Entrega</SelectItem>
+                        <SelectItem value="only_pending">Apenas Pendentes</SelectItem>
+                        <SelectItem value="only_out">Apenas Em Entrega</SelectItem>
                         <SelectItem value="completed">Concluídas</SelectItem>
                         <SelectItem value="cancelled">Canceladas</SelectItem>
                       </SelectContent>
