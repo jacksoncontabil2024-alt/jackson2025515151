@@ -85,7 +85,7 @@ function App() {
   // Calculate statistics
   const stats = {
     totalCash: cashEntries.reduce((acc, entry) => 
-      acc + (entry.type === "entrada" ? entry.value : -entry.value), 0
+      acc + (entry.entry_type === "entrada" ? entry.value : -entry.value), 0
     ),
     totalDeliveries: deliveries.length,
     pendingDeliveries: deliveries.filter(d => !d.foiEntregue && !d.cancelado).length,
