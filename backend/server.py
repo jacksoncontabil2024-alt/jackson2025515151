@@ -192,8 +192,8 @@ async def create_delivery(delivery_input: DeliveryCreate):
         troco=troco
     )
     
-    doc = delivery_obj.model_dump()
-    doc['datetime'] = doc['datetime'].isoformat()
+    doc = delivery_obj.model_dump(by_alias=True)
+    doc['datetime'] = delivery_obj.created_at.isoformat()
     
     await db.deliveries.insert_one(doc)
     
