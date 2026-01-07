@@ -935,6 +935,829 @@ function App() {
               </CardContent>
             </Card>
 
-            {/* Completed Deliveries List - Will continue in part 2... */}
-{/* Due to length limitations, I'll need to split this. Let me create a second file for the remaining tabs */}
+            {/* Completed Deliveries List */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Entregas Concluídas ({completedDeliveries.length})</CardTitle>
+                <CardDescription>Entregas já finalizadas</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[400px]">
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse text-sm">
+                      <thead className="bg-gray-100 sticky top-0">
+                        <tr>
+                          <th className="border p-2 text-left">#</th>
+                          <th className="border p-2 text-left">Cliente</th>
+                          <th className="border p-2 text-left">Valor</th>
+                          <th className="border p-2 text-left">Pagamento 1</th>
+                          <th className="border p-2 text-left">Pagamento 2</th>
+                          <th className="border p-2 text-left">Valor Recebido</th>
+                          <th className="border p-2 text-left">Troco</th>
+                          <th className="border p-2 text-left">Observação</th>
+                          <th className="border p-2 text-left">Entregador</th>
+                          <th className="border p-2 text-left">Cadastro</th>
+                          <th className="border p-2 text-left">Saiu</th>
+                          <th className="border p-2 text-left">Entregue</th>
+                          <th className="border p-2 text-left">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {completedDeliveries.map(delivery => {
+                          const deliverer = deliverers.find(d => d.id === delivery.delivererId);
+                          
+                          return (
+                            <tr key={delivery.id} className="hover:bg-gray-50" data-testid={`completed-delivery-${delivery.id}`}>
+                              <td className="border p-2">
+                                <Badge variant="outline">#{delivery.seq}</Badge>
+                              </td>
+                              <td className="border p-2 font-semibold">{delivery.clientName}</td>
+                              <td className="border p-2">R$ {delivery.amount.toFixed(2)}</td>
+                              <td className="border p-2">
+                                <Badge variant="secondary">{delivery.paymentMethod.toUpperCase()}</Badge>
+                                {delivery.amount2 && <div className="text-xs mt-1">R$ {delivery.amount2.toFixed(2)}</div>}
+                              </td>
+                              <td className="border p-2">
+                                {delivery.paymentMethod2 ? (
+                                  <>
+                                    <Badge variant="secondary">{delivery.paymentMethod2.toUpperCase()}</Badge>
+                                    {delivery.amount2 && <div className="text-xs mt-1">R$ {delivery.amount2.toFixed(2)}</div>}
+                                  </>
+                                ) : '-'}
+                              </td>
+                              <td className="border p-2">
+                                {delivery.valorRecebido ? `R$ ${delivery.valorRecebido.toFixed(2)}` : '-'}
+                              </td>
+                              <td className="border p-2">
+                                {delivery.troco ? `R$ ${delivery.troco.toFixed(2)}` : '-'}
+                              </td>
+                              <td className="border p-2 text-xs max-w-[150px] truncate" title={delivery.observation}>
+                                {delivery.observation || '-'}
+                              </td>
+                              <td className="border p-2">{deliverer ? deliverer.name : '-'}</td>
+                              <td className="border p-2 text-xs">{new Date(delivery.datetime).toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'})}</td>
+                              <td className="border p-2 text-xs">{delivery.horaSaida ? new Date(delivery.horaSaida).toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'}) : '-'}</td>
+                              <td className="border p-2 text-xs">{delivery.horaEntregue ? new Date(delivery.horaEntregue).toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'}) : '-'}</td>
+                              <td className="border p-2">
+                                <div className="flex gap-1">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 text-xs px-2"
+                                    onClick={() => handleUpdateDelivery(delivery.id, { foiEntregue: false, horaEntregue: null })}
+                                    data-testid={`unmark-delivered-${delivery.id}`}
+                                  >
+                                    Voltar p/ Ativas
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 px-2"
+                                    onClick={() => handleDeleteDelivery(delivery.id)}
+                                    data-testid={`delete-completed-delivery-${delivery.id}`}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                    {completedDeliveries.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">
+                        Nenhuma entrega concluída
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
+          {/* Summary Tab */}
+          <TabsContent value="summary" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Resumo Completo de Entregas</CardTitle>
+                    <CardDescription>Visão detalhada de todas as entregas</CardDescription>
+                  </div>
+                  <Button onClick={handleExportSummaryPDF} className="bg-red-600 hover:bg-red-700 text-white" data-testid="export-summary-pdf-btn">
+                    <Download className="mr-2 h-4 w-4" />
+                    Exportar PDF
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[700px]">
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead className="bg-gray-100 sticky top-0">
+                        <tr>
+                          <th className="border p-2 text-left">#</th>
+                          <th className="border p-2 text-left">Cliente</th>
+                          <th className="border p-2 text-left">Valor</th>
+                          <th className="border p-2 text-left">Pagamento</th>
+                          <th className="border p-2 text-left">Valor a Receber</th>
+                          <th className="border p-2 text-left">Entregador</th>
+                          <th className="border p-2 text-left">Status</th>
+                          <th className="border p-2 text-left">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {deliveries.map(delivery => {
+                          const deliverer = deliverers.find(d => d.id === delivery.delivererId);
+                          const valorAReceber = delivery.paymentMethod === "dinheiro" && delivery.valorRecebido 
+                            ? `R$ ${delivery.valorRecebido.toFixed(2)} (Troco: R$ ${delivery.troco?.toFixed(2)})`
+                            : delivery.paymentMethod === "pago" ? "Já Pago" 
+                            : delivery.paymentMethod === "vem_retirar" ? "Pagar ao Retirar"
+                            : `R$ ${delivery.amount.toFixed(2)}`;
+                          
+                          return (
+                            <tr key={delivery.id} className="hover:bg-gray-50" data-testid={`summary-row-${delivery.id}`}>
+                              <td className="border p-2">
+                                <Badge variant="outline">#{delivery.seq}</Badge>
+                              </td>
+                              <td className="border p-2 font-semibold">{delivery.clientName}</td>
+                              <td className="border p-2">R$ {delivery.amount.toFixed(2)}</td>
+                              <td className="border p-2">
+                                <Badge variant="secondary">{delivery.paymentMethod.toUpperCase()}</Badge>
+                              </td>
+                              <td className="border p-2">{valorAReceber}</td>
+                              <td className="border p-2">{deliverer ? deliverer.name : "-"}</td>
+                              <td className="border p-2">
+                                {delivery.cancelado ? (
+                                  <Badge variant="destructive">Cancelado</Badge>
+                                ) : delivery.foiEntregue ? (
+                                  <Badge className="bg-green-500">Entregue</Badge>
+                                ) : delivery.saiuParaEntrega ? (
+                                  <Badge className="bg-blue-500">Em Entrega</Badge>
+                                ) : (
+                                  <Badge className="bg-yellow-500">Pendente</Badge>
+                                )}
+                              </td>
+                              <td className="border p-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2"
+                                  onClick={() => openEditModal(delivery)}
+                                  data-testid={`edit-summary-delivery-${delivery.id}`}
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                    {deliveries.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">
+                        Nenhuma entrega registrada
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Reports Tab */}
+          <TabsContent value="reports" className="space-y-4">
+            <Card className="bg-white shadow-xl">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-2xl flex items-center gap-2">
+                      <BarChart3 className="h-6 w-6 text-blue-600" />
+                      Relatórios por Forma de Pagamento
+                    </CardTitle>
+                    <CardDescription>Análise detalhada de valores por método de pagamento</CardDescription>
+                  </div>
+                  <Button onClick={handleExportReportsPDF} className="bg-red-600 hover:bg-red-700 text-white" data-testid="export-reports-pdf-btn">
+                    <Download className="mr-2 h-4 w-4" />
+                    Exportar PDF
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+                  {/* PIX */}
+                  <Card 
+                    className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-300 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                    onClick={() => setReportDetailMethod('pix')}
+                    data-testid="report-card-pix"
+                  >
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-blue-700">
+                        <Smartphone className="h-6 w-6" />
+                        PIX
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-4xl font-bold text-blue-900 mb-2">
+                        R$ {reports.pix.total.toFixed(2)}
+                      </div>
+                      <div className="text-sm text-blue-700">
+                        {reports.pix.count} {reports.pix.count === 1 ? 'entrega' : 'entregas'}
+                      </div>
+                      <div className="text-xs text-blue-600 mt-2 font-semibold">
+                        Clique para ver detalhes →
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Cartão */}
+                  <Card 
+                    className="bg-gradient-to-br from-indigo-50 to-indigo-100 border-2 border-indigo-300 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                    onClick={() => setReportDetailMethod('cartao')}
+                    data-testid="report-card-cartao"
+                  >
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-indigo-700">
+                        <CreditCard className="h-6 w-6" />
+                        Cartão
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-4xl font-bold text-indigo-900 mb-2">
+                        R$ {reports.cartao.total.toFixed(2)}
+                      </div>
+                      <div className="text-sm text-indigo-700">
+                        {reports.cartao.count} {reports.cartao.count === 1 ? 'entrega' : 'entregas'}
+                      </div>
+                      <div className="text-xs text-indigo-600 mt-2 font-semibold">
+                        Clique para ver detalhes →
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Dinheiro */}
+                  <Card 
+                    className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-300 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                    onClick={() => setReportDetailMethod('dinheiro')}
+                    data-testid="report-card-dinheiro"
+                  >
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-green-700">
+                        <Wallet className="h-6 w-6" />
+                        Dinheiro
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-4xl font-bold text-green-900 mb-2">
+                        R$ {reports.dinheiro.total.toFixed(2)}
+                      </div>
+                      <div className="text-sm text-green-700">
+                        {reports.dinheiro.count} {reports.dinheiro.count === 1 ? 'entrega' : 'entregas'}
+                      </div>
+                      <div className="text-xs text-green-600 mt-2 font-semibold">
+                        Clique para ver detalhes →
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Já Pago */}
+                  <Card 
+                    className="bg-gradient-to-br from-amber-50 to-amber-100 border-2 border-amber-300 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                    onClick={() => setReportDetailMethod('pago')}
+                    data-testid="report-card-pago"
+                  >
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-amber-700">
+                        <CheckCircle className="h-6 w-6" />
+                        Já Pago
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-4xl font-bold text-amber-900 mb-2">
+                        R$ {reports.pago.total.toFixed(2)}
+                      </div>
+                      <div className="text-sm text-amber-700">
+                        {reports.pago.count} {reports.pago.count === 1 ? 'entrega' : 'entregas'}
+                      </div>
+                      <div className="text-xs text-amber-600 mt-2 font-semibold">
+                        Clique para ver detalhes →
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Vem Retirar */}
+                  <Card 
+                    className="bg-gradient-to-br from-rose-50 to-rose-100 border-2 border-rose-300 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                    onClick={() => setReportDetailMethod('vem_retirar')}
+                    data-testid="report-card-vem-retirar"
+                  >
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-rose-700">
+                        <Package className="h-6 w-6" />
+                        Vem Retirar
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-4xl font-bold text-rose-900 mb-2">
+                        R$ {reports.vem_retirar.total.toFixed(2)}
+                      </div>
+                      <div className="text-sm text-rose-700">
+                        {reports.vem_retirar.count} {reports.vem_retirar.count === 1 ? 'entrega' : 'entregas'}
+                      </div>
+                      <div className="text-xs text-rose-600 mt-2 font-semibold">
+                        Clique para ver detalhes →
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Marcar */}
+                  <Card 
+                    className="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-300 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                    onClick={() => setReportDetailMethod('marcar')}
+                    data-testid="report-card-marcar"
+                  >
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-purple-700">
+                        <CheckCircle className="h-6 w-6" />
+                        Marcar
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-4xl font-bold text-purple-900 mb-2">
+                        R$ {reports.marcar.total.toFixed(2)}
+                      </div>
+                      <div className="text-sm text-purple-700">
+                        {reports.marcar.count} {reports.marcar.count === 1 ? 'entrega' : 'entregas'}
+                      </div>
+                      <div className="text-xs text-purple-600 mt-2 font-semibold">
+                        Clique para ver detalhes →
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Total Geral */}
+                  <Card className="bg-gradient-to-br from-blue-600 to-blue-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-white">
+                        <TrendingUp className="h-6 w-6" />
+                        Total Geral
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-4xl font-bold mb-2">
+                        R$ {(reports.pix.total + reports.cartao.total + reports.dinheiro.total + reports.pago.total + reports.vem_retirar.total + reports.marcar.total).toFixed(2)}
+                      </div>
+                      <div className="text-sm text-blue-100">
+                        {reports.pix.count + reports.cartao.count + reports.dinheiro.count + reports.pago.count + reports.vem_retirar.count + reports.marcar.count} entregas totais
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Employees Tab */}
+          <TabsContent value="employees" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Pagamentos de Funcionários</CardTitle>
+                    <CardDescription>Registre pagamentos realizados aos funcionários</CardDescription>
+                  </div>
+                  <Button onClick={handleExportEmployeesPDF} className="bg-red-600 hover:bg-red-700 text-white" data-testid="export-employees-pdf-btn">
+                    <Download className="mr-2 h-4 w-4" />
+                    Exportar PDF
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleAddEmployeePayment} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="employeeName">Nome do Funcionário</Label>
+                      <Input
+                        id="employeeName"
+                        data-testid="employee-name"
+                        placeholder="Digite o nome"
+                        value={employeeForm.employeeName}
+                        onChange={(e) => setEmployeeForm({...employeeForm, employeeName: e.target.value})}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="employeeAmount">Valor (R$)</Label>
+                      <Input
+                        id="employeeAmount"
+                        data-testid="employee-amount"
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={employeeForm.amount}
+                        onChange={(e) => setEmployeeForm({...employeeForm, amount: e.target.value})}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="employeePaymentMethod">Forma de Pagamento</Label>
+                      <Select
+                        value={employeeForm.paymentMethod}
+                        onValueChange={(value) => setEmployeeForm({...employeeForm, paymentMethod: value})}
+                      >
+                        <SelectTrigger data-testid="employee-payment-method">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pix">PIX</SelectItem>
+                          <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full md:w-auto" data-testid="add-employee-payment-btn">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Registrar Pagamento
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Employee Payments List */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Histórico de Pagamentos ({employeePayments.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[500px]">
+                  <div className="space-y-3">
+                    {employeePayments.map(payment => (
+                      <Card key={payment.id} className="border-l-4 border-blue-500" data-testid={`employee-payment-${payment.id}`}>
+                        <CardContent className="pt-6">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-lg">{payment.employeeName}</h3>
+                              <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 mt-2">
+                                <div>Valor: <span className="font-semibold text-gray-900">R$ {payment.amount.toFixed(2)}</span></div>
+                                <div>Pagamento: <span className="font-semibold text-gray-900">{payment.paymentMethod.toUpperCase()}</span></div>
+                                <div className="col-span-2">
+                                  <span className="text-xs">📅 Data: {new Date(payment.datetime).toLocaleString('pt-BR')}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeleteEmployeePayment(payment.id)}
+                              data-testid={`delete-employee-payment-${payment.id}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    {employeePayments.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">
+                        Nenhum pagamento registrado
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+
+            {/* Summary Card */}
+            <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+              <CardHeader>
+                <CardTitle className="text-2xl">Total Pago aos Funcionários</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-4xl font-bold">
+                  R$ {employeePayments.reduce((acc, p) => acc + p.amount, 0).toFixed(2)}
+                </div>
+                <div className="text-sm text-blue-100 mt-2">
+                  {employeePayments.length} {employeePayments.length === 1 ? 'pagamento' : 'pagamentos'}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Deliverers Tab */}
+          <TabsContent value="deliverers" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Adicionar Entregador</CardTitle>
+                <CardDescription>Cadastre novos entregadores</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleAddDeliverer} className="space-y-4">
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <Label htmlFor="delivererName">Nome do Entregador</Label>
+                      <Input
+                        id="delivererName"
+                        data-testid="deliverer-name"
+                        placeholder="Digite o nome"
+                        value={delivererForm.name}
+                        onChange={(e) => setDelivererForm({name: e.target.value})}
+                        required
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <Button type="submit" data-testid="add-deliverer-btn">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Adicionar
+                      </Button>
+                    </div>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Deliverers List */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Lista de Entregadores ({deliverers.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {deliverers.map(deliverer => {
+                    const delivererDeliveries = deliveries.filter(d => d.delivererId === deliverer.id);
+                    const completed = delivererDeliveries.filter(d => d.foiEntregue).length;
+                    return (
+                      <Card key={deliverer.id} data-testid={`deliverer-item-${deliverer.id}`}>
+                        <CardContent className="pt-6">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="font-semibold text-lg flex items-center gap-2">
+                                <Users className="h-5 w-5 text-blue-500" />
+                                {deliverer.name}
+                              </h3>
+                              <div className="text-sm text-gray-600 mt-2">
+                                Total: {delivererDeliveries.length} entregas
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                Concluídas: {completed}
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeleteDeliverer(deliverer.id)}
+                              data-testid={`delete-deliverer-${deliverer.id}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                  {deliverers.length === 0 && (
+                    <div className="col-span-3 text-center py-8 text-gray-500">
+                      Nenhum entregador cadastrado
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Report Detail Dialog */}
+      <Dialog open={reportDetailMethod !== null} onOpenChange={() => setReportDetailMethod(null)}>
+        <DialogContent className="sm:max-w-[900px] max-h-[80vh] bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-2xl flex items-center gap-2">
+              <BarChart3 className="h-6 w-6 text-blue-600" />
+              Detalhes - {reportDetailMethod === 'pix' ? 'PIX' : 
+                         reportDetailMethod === 'cartao' ? 'Cartão' :
+                         reportDetailMethod === 'dinheiro' ? 'Dinheiro' :
+                         reportDetailMethod === 'pago' ? 'Já Pago' :
+                         reportDetailMethod === 'vem_retirar' ? 'Vem Retirar' :
+                         reportDetailMethod === 'marcar' ? 'Marcar' : ''}
+            </DialogTitle>
+            <DialogDescription>
+              Lista completa de entregas com esta forma de pagamento
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="h-[500px] pr-4">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-sm">
+                <thead className="bg-gray-100 sticky top-0">
+                  <tr>
+                    <th className="border p-2 text-left">#</th>
+                    <th className="border p-2 text-left">Cliente</th>
+                    <th className="border p-2 text-left">Valor</th>
+                    <th className="border p-2 text-left">Observação</th>
+                    <th className="border p-2 text-left">Status</th>
+                    <th className="border p-2 text-left">Data</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deliveries
+                    .filter(d => d.paymentMethod === reportDetailMethod && !d.cancelado)
+                    .sort((a, b) => b.seq - a.seq)
+                    .map(delivery => (
+                      <tr key={delivery.id} className="hover:bg-gray-50">
+                        <td className="border p-2">
+                          <Badge variant="outline">#{delivery.seq}</Badge>
+                        </td>
+                        <td className="border p-2 font-semibold">{delivery.clientName}</td>
+                        <td className="border p-2">R$ {delivery.amount.toFixed(2)}</td>
+                        <td className="border p-2 text-xs max-w-[200px] truncate" title={delivery.observation}>
+                          {delivery.observation || '-'}
+                        </td>
+                        <td className="border p-2">
+                          {delivery.foiEntregue ? (
+                            <Badge className="bg-green-500">Entregue</Badge>
+                          ) : delivery.saiuParaEntrega ? (
+                            <Badge className="bg-blue-500">Em Entrega</Badge>
+                          ) : (
+                            <Badge className="bg-yellow-500">Pendente</Badge>
+                          )}
+                        </td>
+                        <td className="border p-2 text-xs">
+                          {new Date(delivery.datetime).toLocaleString('pt-BR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+              {deliveries.filter(d => d.paymentMethod === reportDetailMethod && !d.cancelado).length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  Nenhuma entrega encontrada com esta forma de pagamento
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+          <div className="flex justify-between items-center pt-4 border-t">
+            <div className="text-lg font-bold">
+              Total: R$ {deliveries
+                .filter(d => d.paymentMethod === reportDetailMethod && !d.cancelado)
+                .reduce((acc, d) => acc + d.amount, 0)
+                .toFixed(2)}
+            </div>
+            <Button onClick={() => setReportDetailMethod(null)}>
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Deliverer Selection Dialog */}
+      <Dialog open={selectingDelivererFor !== null} onOpenChange={() => setSelectingDelivererFor(null)}>
+        <DialogContent className="sm:max-w-[400px] bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-2xl flex items-center gap-2">
+              <Users className="h-6 w-6 text-blue-600" />
+              Selecionar Entregador
+            </DialogTitle>
+            <DialogDescription>
+              Entrega #{selectingDelivererFor?.seq} - {selectingDelivererFor?.clientName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="select-deliverer">Entregador</Label>
+              <Select
+                value={selectedDelivererId}
+                onValueChange={setSelectedDelivererId}
+              >
+                <SelectTrigger data-testid="select-deliverer">
+                  <SelectValue placeholder="Selecione um entregador" />
+                </SelectTrigger>
+                <SelectContent>
+                  {deliverers.map(d => (
+                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-3 pt-4">
+              <Button 
+                onClick={handleConfirmDelivererSelection} 
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                data-testid="confirm-deliverer-btn"
+              >
+                Confirmar
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setSelectingDelivererFor(null)} 
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Delivery Dialog */}
+      <Dialog open={editingDelivery !== null} onOpenChange={() => setEditingDelivery(null)}>
+        <DialogContent className="sm:max-w-[500px] bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-2xl flex items-center gap-2">
+              <Edit className="h-6 w-6 text-blue-600" />
+              Editar Entrega #{editingDelivery?.seq}
+            </DialogTitle>
+            <DialogDescription>
+              Altere os dados da entrega abaixo
+            </DialogDescription>
+          </DialogHeader>
+          {editingDelivery && (
+            <form onSubmit={handleEditDelivery} className="space-y-4">
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="edit-clientName">Nome do Cliente</Label>
+                  <Input
+                    id="edit-clientName"
+                    data-testid="edit-client-name"
+                    value={editForm.clientName}
+                    onChange={(e) => setEditForm({...editForm, clientName: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-amount">Valor (R$)</Label>
+                  <Input
+                    id="edit-amount"
+                    data-testid="edit-amount"
+                    type="number"
+                    step="0.01"
+                    value={editForm.amount}
+                    onChange={(e) => setEditForm({...editForm, amount: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-paymentMethod">Forma de Pagamento</Label>
+                  <Select
+                    value={editForm.paymentMethod}
+                    onValueChange={(value) => setEditForm({...editForm, paymentMethod: value})}
+                  >
+                    <SelectTrigger data-testid="edit-payment-method">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pix">PIX</SelectItem>
+                      <SelectItem value="cartao">Cartão</SelectItem>
+                      <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                      <SelectItem value="pago">Já Pago</SelectItem>
+                      <SelectItem value="vem_retirar">Vem Retirar</SelectItem>
+                      <SelectItem value="marcar">Marcar</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {editForm.paymentMethod === "dinheiro" && (
+                  <div>
+                    <Label htmlFor="edit-valorRecebido">Valor Recebido (R$)</Label>
+                    <Input
+                      id="edit-valorRecebido"
+                      data-testid="edit-valor-recebido"
+                      type="number"
+                      step="0.01"
+                      value={editForm.valorRecebido}
+                      onChange={(e) => setEditForm({...editForm, valorRecebido: e.target.value})}
+                    />
+                  </div>
+                )}
+                <div>
+                  <Label htmlFor="edit-observation">Observação</Label>
+                  <Input
+                    id="edit-observation"
+                    data-testid="edit-observation"
+                    placeholder="Digite uma observação (opcional)"
+                    value={editForm.observation}
+                    onChange={(e) => setEditForm({...editForm, observation: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700" data-testid="save-edit-btn">
+                  Salvar Alterações
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setEditingDelivery(null)} className="flex-1">
+                  Cancelar
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+export default App;
