@@ -292,8 +292,8 @@ async def get_deliverers():
 @api_router.post("/deliverers", response_model=Deliverer)
 async def create_deliverer(deliverer_input: DelivererCreate):
     deliverer_obj = Deliverer(**deliverer_input.model_dump())
-    doc = deliverer_obj.model_dump()
-    doc['datetime'] = doc['datetime'].isoformat()
+    doc = deliverer_obj.model_dump(by_alias=True)
+    doc['datetime'] = deliverer_obj.created_at.isoformat()
     await db.deliverers.insert_one(doc)
     return deliverer_obj
 
