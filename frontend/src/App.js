@@ -132,12 +132,12 @@ function App() {
     e.preventDefault();
     try {
       await axios.post(`${API}/cash`, {
-        type: cashForm.type,
+        entry_type: cashForm.entry_type,
         value: parseFloat(cashForm.value),
         desc: cashForm.desc
       });
-      toast.success(cashForm.type === "entrada" ? "Entrada registrada!" : "Saída registrada!");
-      setCashForm({ type: "entrada", value: "", desc: "" });
+      toast.success(cashForm.entry_type === "entrada" ? "Entrada registrada!" : "Saída registrada!");
+      setCashForm({ entry_type: "entrada", value: "", desc: "" });
       loadData();
     } catch (error) {
       toast.error("Erro ao adicionar entrada");
