@@ -72,7 +72,7 @@ class Delivery(BaseModel):
     saiuParaEntrega: bool = False
     foiEntregue: bool = False
     cancelado: bool = False
-    datetime: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), alias="datetime")
     horaSaida: Optional[datetime] = None
     horaEntregue: Optional[datetime] = None
 
@@ -109,7 +109,7 @@ class Deliverer(BaseModel):
     
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
-    datetime: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), alias="datetime")
 
 
 class DelivererCreate(BaseModel):
@@ -123,7 +123,7 @@ class EmployeePayment(BaseModel):
     employeeName: str
     amount: float
     paymentMethod: str  # pix or dinheiro
-    datetime: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), alias="datetime")
 
 
 class EmployeePaymentCreate(BaseModel):
