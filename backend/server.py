@@ -140,6 +140,9 @@ async def get_cash_entries():
     for entry in entries:
         if isinstance(entry['datetime'], str):
             entry['datetime'] = datetime.fromisoformat(entry['datetime'])
+        # Handle the type field properly
+        if 'type' in entry:
+            entry['type_'] = entry.pop('type')
     return sorted(entries, key=lambda x: x['datetime'], reverse=True)
 
 
