@@ -401,7 +401,7 @@ async def export_excel():
     
     for entry in sorted(cash_entries, key=lambda x: x.get('datetime', ''), reverse=True):
         ws2.append([
-            entry.get('type', '').upper(),
+            entry.get('entry_type', '').upper(),
             f"R$ {entry.get('value', 0):.2f}",
             entry.get('desc', ''),
             entry.get('datetime', '')
