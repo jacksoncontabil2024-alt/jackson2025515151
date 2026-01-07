@@ -105,11 +105,11 @@ class DeliveryUpdate(BaseModel):
 
 
 class Deliverer(BaseModel):
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
     
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), alias="datetime")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), serialization_alias="datetime")
 
 
 class DelivererCreate(BaseModel):
