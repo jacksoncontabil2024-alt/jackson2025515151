@@ -40,17 +40,17 @@ api_router = APIRouter(prefix="/api")
 # ========== MODELS ==========
 
 class CashEntry(BaseModel):
-    model_config = ConfigDict(extra="ignore", populate_by_name=True)
+    model_config = ConfigDict(extra="ignore")
     
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    type: str = Field(default="entrada")  # "entrada" or "saida"
+    type_: Annotated[str, Field(alias="type")]  # "entrada" or "saida"
     value: float
     desc: str = ""
     datetime: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class CashEntryCreate(BaseModel):
-    type: str
+    type_: Annotated[str, Field(alias="type")]
     value: float
     desc: str = ""
 
