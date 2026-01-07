@@ -43,14 +43,14 @@ class CashEntry(BaseModel):
     model_config = ConfigDict(extra="ignore")
     
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    type_: Annotated[str, Field(alias="type")]  # "entrada" or "saida"
+    entry_type: str  # "entrada" or "saida"
     value: float
     desc: str = ""
     datetime: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class CashEntryCreate(BaseModel):
-    type_: Annotated[str, Field(alias="type")]
+    entry_type: str
     value: float
     desc: str = ""
 
