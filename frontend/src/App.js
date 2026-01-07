@@ -496,8 +496,8 @@ function App() {
                     <div>
                       <Label htmlFor="cashType">Tipo</Label>
                       <Select
-                        value={cashForm.type}
-                        onValueChange={(value) => setCashForm({...cashForm, type: value})}
+                        value={cashForm.entry_type}
+                        onValueChange={(value) => setCashForm({...cashForm, entry_type: value})}
                       >
                         <SelectTrigger data-testid="cash-type">
                           <SelectValue />
