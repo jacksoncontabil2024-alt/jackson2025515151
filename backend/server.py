@@ -46,7 +46,7 @@ class CashEntry(BaseModel):
     entry_type: str  # "entrada" or "saida"
     value: float
     desc: str = ""
-    datetime: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class CashEntryCreate(BaseModel):
