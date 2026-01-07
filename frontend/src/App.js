@@ -563,7 +563,7 @@ function App() {
                         <CardContent className="pt-6">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                              {entry.type === "entrada" ? (
+                              {entry.entry_type === "entrada" ? (
                                 <TrendingUp className="h-8 w-8 text-green-500" />
                               ) : (
                                 <TrendingDown className="h-8 w-8 text-red-500" />
@@ -579,8 +579,8 @@ function App() {
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Badge variant={entry.type === "entrada" ? "default" : "destructive"}>
-                                {entry.type === "entrada" ? "ENTRADA" : "SAÍDA"}
+                              <Badge variant={entry.entry_type === "entrada" ? "default" : "destructive"}>
+                                {entry.entry_type === "entrada" ? "ENTRADA" : "SAÍDA"}
                               </Badge>
                               <Button
                                 size="sm"
