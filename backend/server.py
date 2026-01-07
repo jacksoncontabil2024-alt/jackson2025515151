@@ -328,8 +328,8 @@ async def get_employee_payments():
 @api_router.post("/employee-payments", response_model=EmployeePayment)
 async def create_employee_payment(payment_input: EmployeePaymentCreate):
     payment_obj = EmployeePayment(**payment_input.model_dump())
-    doc = payment_obj.model_dump()
-    doc['datetime'] = doc['datetime'].isoformat()
+    doc = payment_obj.model_dump(by_alias=True)
+    doc['datetime'] = payment_obj.created_at.isoformat()
     await db.employee_payments.insert_one(doc)
     return payment_obj
 
