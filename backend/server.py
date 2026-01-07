@@ -146,8 +146,8 @@ async def get_cash_entries():
 @api_router.post("/cash", response_model=CashEntry)
 async def create_cash_entry(entry_input: CashEntryCreate):
     entry_obj = CashEntry(**entry_input.model_dump())
-    doc = entry_obj.model_dump()
-    doc['datetime'] = doc['datetime'].isoformat()
+    doc = entry_obj.model_dump(by_alias=True)
+    doc['datetime'] = entry_obj.created_at.isoformat()
     await db.cash_entries.insert_one(doc)
     return entry_obj
 
