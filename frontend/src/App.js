@@ -25,7 +25,7 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   // Form states
-  const [cashForm, setCashForm] = useState({ type: "entrada", value: "", desc: "" });
+  const [cashForm, setCashForm] = useState({ entry_type: "entrada", value: "", desc: "" });
   const [deliveryForm, setDeliveryForm] = useState({
     clientName: "",
     amount: "",
