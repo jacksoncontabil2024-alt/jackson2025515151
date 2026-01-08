@@ -868,57 +868,70 @@ function App() {
                                   >
                                     <Edit className="h-3 w-3" />
                                   </Button>
-                                  {!delivery.cancelado && !delivery.foiEntregue && (
+                                  {delivery.cancelado ? (
+                                    <Button
+                                      size="sm"
+                                      className="bg-green-600 hover:bg-green-700 h-7 text-xs px-2"
+                                      onClick={() => handleUpdateDelivery(delivery.id, { cancelado: false })}
+                                      data-testid={`uncancel-delivery-${delivery.id}`}
+                                    >
+                                      Descancelar
+                                    </Button>
+                                  ) : (
                                     <>
-                                      {!delivery.saiuParaEntrega && (
-                                        <Button
-                                          size="sm"
-                                          className="h-7 text-xs px-2"
-                                          onClick={() => handleMarkAsOut(delivery)}
-                                          data-testid={`mark-out-delivery-${delivery.id}`}
-                                        >
-                                          Saiu
-                                        </Button>
-                                      )}
-                                      {delivery.saiuParaEntrega && (
+                                      {!delivery.foiEntregue && (
                                         <>
+                                          {!delivery.saiuParaEntrega && (
+                                            <Button
+                                              size="sm"
+                                              className="h-7 text-xs px-2"
+                                              onClick={() => handleMarkAsOut(delivery)}
+                                              data-testid={`mark-out-delivery-${delivery.id}`}
+                                            >
+                                              Saiu
+                                            </Button>
+                                          )}
+                                          {delivery.saiuParaEntrega && (
+                                            <>
+                                              <Button
+                                                size="sm"
+                                                className="bg-green-600 hover:bg-green-700 h-7 text-xs px-2"
+                                                onClick={() => handleUpdateDelivery(delivery.id, { foiEntregue: true })}
+                                                data-testid={`mark-delivered-${delivery.id}`}
+                                              >
+                                                Entregue
+                                              </Button>
+                                              <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="h-7 text-xs px-2"
+                                                onClick={() => handleChangeDeliverer(delivery)}
+                                                data-testid={`change-deliverer-${delivery.id}`}
+                                              >
+                                                Alterar
+                                              </Button>
+                                              <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="h-7 text-xs px-2 text-red-600 hover:text-red-700"
+                                                onClick={() => handleUpdateDelivery(delivery.id, { saiuParaEntrega: false, delivererId: null, horaSaida: null })}
+                                                data-testid={`remove-deliverer-${delivery.id}`}
+                                              >
+                                                Remover Entregador
+                                              </Button>
+                                            </>
+                                          )}
                                           <Button
                                             size="sm"
-                                            className="bg-green-600 hover:bg-green-700 h-7 text-xs px-2"
-                                            onClick={() => handleUpdateDelivery(delivery.id, { foiEntregue: true })}
-                                            data-testid={`mark-delivered-${delivery.id}`}
-                                          >
-                                            Entregue
-                                          </Button>
-                                          <Button
-                                            size="sm"
-                                            variant="outline"
+                                            variant="destructive"
                                             className="h-7 text-xs px-2"
-                                            onClick={() => handleChangeDeliverer(delivery)}
-                                            data-testid={`change-deliverer-${delivery.id}`}
+                                            onClick={() => handleUpdateDelivery(delivery.id, { cancelado: true })}
+                                            data-testid={`cancel-delivery-${delivery.id}`}
                                           >
-                                            Alterar
-                                          </Button>
-                                          <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="h-7 text-xs px-2 text-red-600 hover:text-red-700"
-                                            onClick={() => handleUpdateDelivery(delivery.id, { saiuParaEntrega: false, delivererId: null, horaSaida: null })}
-                                            data-testid={`remove-deliverer-${delivery.id}`}
-                                          >
-                                            Remover Entregador
+                                            Cancelar
                                           </Button>
                                         </>
                                       )}
-                                      <Button
-                                        size="sm"
-                                        variant="destructive"
-                                        className="h-7 text-xs px-2"
-                                        onClick={() => handleUpdateDelivery(delivery.id, { cancelado: true })}
-                                        data-testid={`cancel-delivery-${delivery.id}`}
-                                      >
-                                        Cancelar
-                                      </Button>
                                     </>
                                   )}
                                   <Button
