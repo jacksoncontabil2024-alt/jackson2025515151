@@ -362,10 +362,16 @@ function App() {
 
   // Filter deliveries
   const filteredDeliveries = deliveries.filter(d => {
-    const matchesSearch = d.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         d.seq.toString().includes(searchTerm);
+    // Handle multiple search terms separated by ;
+    const searchTerms = searchTerm.split(';').map(t => t.trim()).filter(t => t);
+    const matchesSearch = searchTerms.length === 0 || searchTerms.some(term =>
+      d.clientName.toLowerCase().includes(term.toLowerCase()) ||
+      d.seq.toString() === term
+    );
+    
     const matchesStatus = statusFilter === "all" ? true :
-                         statusFilter === "pending" ? (!d.foiEntregue && !d.cancelado) :
+                         statusFilter === "pending" ? (!d.foiEntregue && !d.saiuParaEntrega && !d.cancelado) :
+                         statusFilter === "out_for_delivery" ? (d.saiuParaEntrega && !d.foiEntregue && !d.cancelado) :
                          statusFilter === "completed" ? d.foiEntregue :
                          statusFilter === "cancelled" ? d.cancelado : true;
     const matchesDeliverer = delivererFilter === "all" ? true : d.delivererId === delivererFilter;
