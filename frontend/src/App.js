@@ -55,6 +55,29 @@ function App() {
   // Reports detail modal state
   const [reportDetailMethod, setReportDetailMethod] = useState(null);
 
+  // Helper function to calculate total delivery value
+  const getDeliveryTotalValue = (delivery) => {
+    let total = delivery.amount || 0;
+    if (delivery.amount2) {
+      total += delivery.amount2;
+    }
+    return total;
+  };
+
+  // Helper function to get payment method display name
+  const getPaymentMethodName = (method) => {
+    const names = {
+      'pix': 'PIX',
+      'cartao': 'Cartão',
+      'dinheiro': 'Dinheiro',
+      'pago': 'Já Pago',
+      'vem_retirar': 'Vem Retirar',
+      'marcar': 'Marcar',
+      'pagou_a_conta': 'Pagou a Conta'
+    };
+    return names[method] || method.toUpperCase();
+  };
+
   // Load data
   const loadData = async () => {
     try {
