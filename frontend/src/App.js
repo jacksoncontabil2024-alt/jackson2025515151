@@ -766,6 +766,7 @@ function App() {
                       <SelectContent>
                         <SelectItem value="all">Todos</SelectItem>
                         <SelectItem value="pending">Pendentes</SelectItem>
+                        <SelectItem value="out_for_delivery">Em Entrega</SelectItem>
                         <SelectItem value="completed">Concluídas</SelectItem>
                         <SelectItem value="cancelled">Canceladas</SelectItem>
                       </SelectContent>
