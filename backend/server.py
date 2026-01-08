@@ -62,7 +62,7 @@ class Delivery(BaseModel):
     seq: int  # Sequential number
     clientName: str
     amount: float
-    paymentMethod: str  # pix, cartao, dinheiro, pago, vem_retirar, marcar
+    paymentMethod: str  # pix, cartao, dinheiro, pago, vem_retirar, marcar, pagou_a_conta
     paymentMethod2: Optional[str] = None  # Second payment method
     amount2: Optional[float] = None  # Amount for second payment method
     valorRecebido: Optional[float] = None  # For cash payments
@@ -72,6 +72,7 @@ class Delivery(BaseModel):
     saiuParaEntrega: bool = False
     foiEntregue: bool = False
     cancelado: bool = False
+    checkedInReport: bool = False  # For report checklist
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), serialization_alias="datetime")
     horaSaida: Optional[datetime] = None
     horaEntregue: Optional[datetime] = None
