@@ -101,6 +101,7 @@ class DeliveryUpdate(BaseModel):
     saiuParaEntrega: Optional[bool] = None
     foiEntregue: Optional[bool] = None
     cancelado: Optional[bool] = None
+    checkedInReport: Optional[bool] = None
     horaSaida: Optional[datetime] = None
     horaEntregue: Optional[datetime] = None
 
