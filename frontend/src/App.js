@@ -182,6 +182,22 @@ function App() {
     }
   };
 
+  // Handle checklist toggle in reports
+  const handleToggleCheck = async (deliveryId, currentState) => {
+    try {
+      await axios.patch(`${API}/deliveries/${deliveryId}`, {
+        checkedInReport: !currentState
+      });
+      // Update local state without full reload
+      setDeliveries(deliveries.map(d => 
+        d.id === deliveryId ? {...d, checkedInReport: !currentState} : d
+      ));
+      toast.success(currentState ? "Desmarcado" : "Marcado como conferido");
+    } catch (error) {
+      toast.error("Erro ao atualizar");
+    }
+  };
+
   // Delivery handlers
   const handleAddDelivery = async (e) => {
     e.preventDefault();
@@ -197,9 +213,16 @@ function App() {
           : null,
         observation: deliveryForm.observation || null
       };
+      
+      // Handle troco for second payment if it's dinheiro
+      if (deliveryForm.paymentMethod2 === "dinheiro" && deliveryForm.valorRecebido2 && deliveryForm.amount2) {
+        const troco2 = parseFloat(deliveryForm.valorRecebido2) - parseFloat(deliveryForm.amount2);
+        payload.observation = (payload.observation || "") + ` [Troco pag.2: R$ ${troco2.toFixed(2)}]`;
+      }
+      
       await axios.post(`${API}/deliveries`, payload);
       toast.success("Entrega criada!");
-      setDeliveryForm({ clientName: "", amount: "", paymentMethod: "pix", paymentMethod2: "", amount2: "", valorRecebido: "", observation: "" });
+      setDeliveryForm({ clientName: "", amount: "", paymentMethod: "pix", paymentMethod2: "", amount2: "", valorRecebido: "", valorRecebido2: "", observation: "" });
       loadData();
     } catch (error) {
       toast.error("Erro ao criar entrega");
