@@ -1666,6 +1666,7 @@ function App() {
               <table className="w-full border-collapse text-sm">
                 <thead className="bg-gray-100 sticky top-0">
                   <tr>
+                    <th className="border p-2 text-center">✓</th>
                     <th className="border p-2 text-left">#</th>
                     <th className="border p-2 text-left">Cliente</th>
                     <th className="border p-2 text-left">Valor</th>
@@ -1679,7 +1680,25 @@ function App() {
                     .filter(d => d.paymentMethod === reportDetailMethod && !d.cancelado)
                     .sort((a, b) => b.seq - a.seq)
                     .map(delivery => (
-                      <tr key={delivery.id} className="hover:bg-gray-50">
+                      <tr 
+                        key={delivery.id} 
+                        className={`hover:bg-gray-50 ${delivery.checkedInReport ? 'bg-green-50' : ''}`}
+                      >
+                        <td className="border p-2 text-center">
+                          <button
+                            onClick={() => handleToggleCheck(delivery.id, delivery.checkedInReport)}
+                            className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
+                              delivery.checkedInReport 
+                                ? 'bg-green-500 border-green-600' 
+                                : 'bg-white border-gray-300 hover:border-green-400'
+                            }`}
+                            data-testid={`check-delivery-${delivery.id}`}
+                          >
+                            {delivery.checkedInReport && (
+                              <CheckCircle className="h-4 w-4 text-white" />
+                            )}
+                          </button>
+                        </td>
                         <td className="border p-2">
                           <Badge variant="outline">#{delivery.seq}</Badge>
                         </td>
