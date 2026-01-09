@@ -1654,7 +1654,8 @@ function App() {
                          reportDetailMethod === 'dinheiro' ? 'Dinheiro' :
                          reportDetailMethod === 'pago' ? 'Já Pago' :
                          reportDetailMethod === 'vem_retirar' ? 'Vem Retirar' :
-                         reportDetailMethod === 'marcar' ? 'Marcar' : ''}
+                         reportDetailMethod === 'marcar' ? 'Marcar' :
+                         reportDetailMethod === 'pagou_a_conta' ? 'Pagou a Conta' : ''}
             </DialogTitle>
             <DialogDescription>
               Lista completa de entregas com esta forma de pagamento
