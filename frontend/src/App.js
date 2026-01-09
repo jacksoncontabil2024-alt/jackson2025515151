@@ -1387,6 +1387,31 @@ function App() {
                     </CardContent>
                   </Card>
 
+                  {/* Pagou a Conta */}
+                  <Card 
+                    className="bg-gradient-to-br from-teal-50 to-teal-100 border-2 border-teal-300 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                    onClick={() => setReportDetailMethod('pagou_a_conta')}
+                    data-testid="report-card-pagou-conta"
+                  >
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-teal-700">
+                        <CheckCircle className="h-6 w-6" />
+                        Pagou a Conta
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-4xl font-bold text-teal-900 mb-2">
+                        R$ {reports.pagou_a_conta.total.toFixed(2)}
+                      </div>
+                      <div className="text-sm text-teal-700">
+                        {reports.pagou_a_conta.count} {reports.pagou_a_conta.count === 1 ? 'entrega' : 'entregas'}
+                      </div>
+                      <div className="text-xs text-teal-600 mt-2 font-semibold">
+                        Clique para ver detalhes →
+                      </div>
+                    </CardContent>
+                  </Card>
+
                   {/* Total Geral */}
                   <Card className="bg-gradient-to-br from-blue-600 to-blue-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all">
                     <CardHeader className="pb-3">
