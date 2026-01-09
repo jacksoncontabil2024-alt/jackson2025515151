@@ -33,6 +33,7 @@ function App() {
     paymentMethod2: "",
     amount2: "",
     valorRecebido: "",
+    valorRecebido2: "",  // NEW: for second payment if dinheiro
     observation: ""
   });
   const [delivererForm, setDelivererForm] = useState({ name: "" });
