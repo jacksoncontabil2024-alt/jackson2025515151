@@ -768,6 +768,25 @@ function App() {
                         />
                       </div>
                     )}
+                    {deliveryForm.paymentMethod2 === "dinheiro" && (
+                      <div>
+                        <Label htmlFor="valorRecebido2">Valor Recebido Pag.2 (R$)</Label>
+                        <Input
+                          id="valorRecebido2"
+                          data-testid="delivery-valor-recebido2"
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={deliveryForm.valorRecebido2}
+                          onChange={(e) => setDeliveryForm({...deliveryForm, valorRecebido2: e.target.value})}
+                        />
+                        {deliveryForm.valorRecebido2 && deliveryForm.amount2 && (
+                          <p className="text-sm text-green-600 mt-1">
+                            Troco: R$ {(parseFloat(deliveryForm.valorRecebido2) - parseFloat(deliveryForm.amount2)).toFixed(2)}
+                          </p>
+                        )}
+                      </div>
+                    )}
                     <div className="col-span-full">
                       <Label htmlFor="observation">Observação (Opcional)</Label>
                       <Input
