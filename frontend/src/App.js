@@ -1282,17 +1282,30 @@ function App() {
 
                   {/* Cartão */}
                   <Card 
-                    className="bg-gradient-to-br from-indigo-50 to-indigo-100 border-2 border-indigo-300 shadow-lg hover:shadow-xl transition-all cursor-pointer"
-                    onClick={() => setReportDetailMethod('cartao')}
+                    className="bg-gradient-to-br from-indigo-50 to-indigo-100 border-2 border-indigo-300 shadow-lg hover:shadow-xl transition-all"
                     data-testid="report-card-cartao"
                   >
                     <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-indigo-700">
-                        <CreditCard className="h-6 w-6" />
-                        Cartão
+                      <CardTitle className="flex items-center justify-between text-indigo-700">
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="h-6 w-6" />
+                          Cartão
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 w-8 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePrintCupom('cartao');
+                          }}
+                          title="Imprimir Cupom Fiscal"
+                        >
+                          <Printer className="h-4 w-4" />
+                        </Button>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent onClick={() => setReportDetailMethod('cartao')} className="cursor-pointer">
                       <div className="text-4xl font-bold text-indigo-900 mb-2">
                         R$ {reports.cartao.total.toFixed(2)}
                       </div>
