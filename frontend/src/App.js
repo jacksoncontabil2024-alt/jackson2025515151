@@ -1244,17 +1244,30 @@ function App() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
                   {/* PIX */}
                   <Card 
-                    className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-300 shadow-lg hover:shadow-xl transition-all cursor-pointer"
-                    onClick={() => setReportDetailMethod('pix')}
+                    className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-300 shadow-lg hover:shadow-xl transition-all"
                     data-testid="report-card-pix"
                   >
                     <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-blue-700">
-                        <Smartphone className="h-6 w-6" />
-                        PIX
+                      <CardTitle className="flex items-center justify-between text-blue-700">
+                        <div className="flex items-center gap-2">
+                          <Smartphone className="h-6 w-6" />
+                          PIX
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 w-8 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePrintCupom('pix');
+                          }}
+                          title="Imprimir Cupom Fiscal"
+                        >
+                          <Printer className="h-4 w-4" />
+                        </Button>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent onClick={() => setReportDetailMethod('pix')} className="cursor-pointer">
                       <div className="text-4xl font-bold text-blue-900 mb-2">
                         R$ {reports.pix.total.toFixed(2)}
                       </div>
