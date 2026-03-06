@@ -552,6 +552,241 @@ async def export_employees_pdf():
     )
 
 
+# ==================== BACKUP ENDPOINT ====================
+
+class BackupRequest(BaseModel):
+    date: str  # ISO format: "YYYY-MM-DD"
+
+@api_router.post("/backup")
+async def generate_backup(request: BackupRequest):
+    from datetime import timedelta
+    
+    # Parse the date
+    try:
+        target_date = datetime.strptime(request.date, "%Y-%m-%d")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+    
+    # Date range: start of day to end of day (UTC)
+    day_start = target_date.replace(hour=0, minute=0, second=0).isoformat()
+    day_end = (target_date + timedelta(days=1)).replace(hour=0, minute=0, second=0).isoformat()
+    
+    date_filter = {"datetime": {"$gte": day_start, "$lt": day_end}}
+    
+    # Fetch all data for the date
+    deliveries = await db.deliveries.find({**date_filter, **{"_id": 0}}).sort("seq", 1).to_list(10000)
+    cash_entries = await db.cash_entries.find({**date_filter, **{"_id": 0}}).to_list(10000)
+    employee_payments = await db.employee_payments.find({**date_filter, **{"_id": 0}}).to_list(10000)
+    deliverers_list = await db.deliverers.find({}, {"_id": 0}).to_list(1000)
+    deliverers_dict = {d["id"]: d["name"] for d in deliverers_list}
+    
+    date_str = request.date
+    
+    # Create ZIP in memory
+    zip_buffer = io.BytesIO()
+    
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+        # 1. Excel file
+        wb = Workbook()
+        ws_del = wb.active
+        ws_del.title = "Entregas"
+        ws_del.append(["#", "Cliente", "Valor Total", "Pagamento 1", "Valor 1", "Pagamento 2", "Valor 2", "Valor Recebido", "Troco", "Observacao", "Status", "Entregador", "Cadastro", "Saiu", "Entregue"])
+        for d in deliveries:
+            status = "Cancelado" if d.get("cancelado") else ("Entregue" if d.get("foiEntregue") else ("Em Entrega" if d.get("saiuParaEntrega") else "Pendente"))
+            ws_del.append([
+                d.get("seq", ""), d.get("clientName", ""),
+                d.get("amount", 0) + (d.get("amount2") or 0),
+                d.get("paymentMethod", "").upper(), d.get("amount", 0),
+                (d.get("paymentMethod2") or "").upper() or "-", d.get("amount2") or "-",
+                d.get("valorRecebido") or "-", d.get("troco") or "-",
+                d.get("observation") or "-", status,
+                deliverers_dict.get(d.get("delivererId", ""), "-"),
+                d.get("datetime", ""), d.get("horaSaida") or "-", d.get("horaEntregue") or "-"
+            ])
+        
+        ws_cash = wb.create_sheet("Caixa")
+        ws_cash.append(["Tipo", "Valor", "Descricao", "Data/Hora"])
+        for e in cash_entries:
+            ws_cash.append([e.get("type", "").upper(), e.get("value", 0), e.get("desc", ""), e.get("datetime", "")])
+        
+        ws_emp = wb.create_sheet("Funcionarios")
+        ws_emp.append(["Nome", "Valor", "Pagamento", "Data/Hora"])
+        for p in employee_payments:
+            ws_emp.append([p.get("employeeName", ""), p.get("amount", 0), p.get("paymentMethod", "").upper(), p.get("datetime", "")])
+        
+        excel_buf = io.BytesIO()
+        wb.save(excel_buf)
+        excel_buf.seek(0)
+        zf.writestr(f"dados_completos_{date_str}.xlsx", excel_buf.getvalue())
+        
+        # 2. PDF - Cash Summary
+        cash_buf = io.BytesIO()
+        doc = SimpleDocTemplate(cash_buf, pagesize=A4)
+        elements = []
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle('BkpTitle', parent=styles['Heading1'], fontSize=18, textColor=colors.HexColor('#1e40af'), spaceAfter=20)
+        
+        elements.append(Paragraph(f"Resumo de Caixa - {date_str}", title_style))
+        elements.append(Spacer(1, 0.2*inch))
+        
+        cash_data = [["Tipo", "Valor (R$)", "Descricao", "Data/Hora"]]
+        total_entradas = 0
+        total_saidas = 0
+        for e in cash_entries:
+            cash_data.append([e.get("type", "").upper(), f"R$ {e.get('value', 0):.2f}", e.get("desc", ""), e.get("datetime", "")])
+            if e.get("type") == "entrada":
+                total_entradas += e.get("value", 0)
+            else:
+                total_saidas += e.get("value", 0)
+        cash_data.append(["TOTAL ENTRADAS", f"R$ {total_entradas:.2f}", "", ""])
+        cash_data.append(["TOTAL SAIDAS", f"R$ {total_saidas:.2f}", "", ""])
+        cash_data.append(["SALDO", f"R$ {(total_entradas - total_saidas):.2f}", "", ""])
+        
+        if len(cash_data) > 1:
+            t = Table(cash_data, colWidths=[1.5*inch, 1.5*inch, 2.5*inch, 2*inch])
+            t.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e40af')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 8),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('BACKGROUND', (0, -3), (-1, -1), colors.HexColor('#e0e7ff')),
+                ('FONTNAME', (0, -3), (-1, -1), 'Helvetica-Bold'),
+            ]))
+            elements.append(t)
+        else:
+            elements.append(Paragraph("Nenhuma movimentacao de caixa nesta data.", styles['Normal']))
+        
+        doc.build(elements)
+        cash_buf.seek(0)
+        zf.writestr(f"caixa_{date_str}.pdf", cash_buf.getvalue())
+        
+        # 3. PDF - General Deliveries Report
+        del_buf = io.BytesIO()
+        doc2 = SimpleDocTemplate(del_buf, pagesize=A4)
+        elements2 = []
+        elements2.append(Paragraph(f"Relatorio Geral de Entregas - {date_str}", title_style))
+        elements2.append(Spacer(1, 0.2*inch))
+        
+        del_data = [["#", "Cliente", "Valor", "Pag.", "Status", "Entregador"]]
+        for d in deliveries:
+            status = "Cancelado" if d.get("cancelado") else ("Entregue" if d.get("foiEntregue") else ("Em Entrega" if d.get("saiuParaEntrega") else "Pendente"))
+            del_data.append([
+                f"#{d.get('seq', '')}", d.get("clientName", ""),
+                f"R$ {(d.get('amount', 0) + (d.get('amount2') or 0)):.2f}",
+                d.get("paymentMethod", "").upper(),
+                status, deliverers_dict.get(d.get("delivererId", ""), "-")
+            ])
+        
+        total_del = sum(d.get("amount", 0) + (d.get("amount2") or 0) for d in deliveries if not d.get("cancelado"))
+        del_data.append(["", "TOTAL", f"R$ {total_del:.2f}", "", f"{len(deliveries)} entregas", ""])
+        
+        if len(del_data) > 1:
+            t2 = Table(del_data, colWidths=[0.6*inch, 1.8*inch, 1.2*inch, 1*inch, 1.2*inch, 1.2*inch])
+            t2.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e40af')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 8),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#1e40af')),
+                ('TEXTCOLOR', (0, -1), (-1, -1), colors.whitesmoke),
+                ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ]))
+            elements2.append(t2)
+        else:
+            elements2.append(Paragraph("Nenhuma entrega nesta data.", styles['Normal']))
+        
+        doc2.build(elements2)
+        del_buf.seek(0)
+        zf.writestr(f"entregas_{date_str}.pdf", del_buf.getvalue())
+        
+        # 4. PDF - Reports by Payment Method
+        pay_buf = io.BytesIO()
+        doc3 = SimpleDocTemplate(pay_buf, pagesize=A4)
+        elements3 = []
+        elements3.append(Paragraph(f"Relatorios por Forma de Pagamento - {date_str}", title_style))
+        elements3.append(Spacer(1, 0.2*inch))
+        
+        methods = ["pix", "cartao", "dinheiro", "pago", "vem_retirar", "marcar", "pagou_conta"]
+        method_names = {"pix": "PIX", "cartao": "Cartao", "dinheiro": "Dinheiro", "pago": "Pago", "vem_retirar": "Vem Retirar", "marcar": "Marcar", "pagou_conta": "Pagou a Conta"}
+        
+        pay_data = [["Forma de Pagamento", "Total (R$)", "Quantidade"]]
+        total_geral = 0
+        total_count = 0
+        for m in methods:
+            filtered = [d for d in deliveries if d.get("paymentMethod") == m and not d.get("cancelado")]
+            total = sum(d.get("amount", 0) for d in filtered)
+            count = len(filtered)
+            pay_data.append([method_names[m], f"R$ {total:.2f}", str(count)])
+            total_geral += total
+            total_count += count
+        pay_data.append(["TOTAL GERAL", f"R$ {total_geral:.2f}", str(total_count)])
+        
+        t3 = Table(pay_data, colWidths=[3*inch, 2*inch, 1.5*inch])
+        t3.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e40af')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#1e40af')),
+            ('TEXTCOLOR', (0, -1), (-1, -1), colors.whitesmoke),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ]))
+        elements3.append(t3)
+        
+        doc3.build(elements3)
+        pay_buf.seek(0)
+        zf.writestr(f"relatorios_pagamento_{date_str}.pdf", pay_buf.getvalue())
+        
+        # 5. PDF - Employee Payments
+        emp_buf = io.BytesIO()
+        doc4 = SimpleDocTemplate(emp_buf, pagesize=A4)
+        elements4 = []
+        elements4.append(Paragraph(f"Pagamentos de Funcionarios - {date_str}", title_style))
+        elements4.append(Spacer(1, 0.2*inch))
+        
+        emp_data = [["Nome", "Valor", "Pagamento", "Data/Hora"]]
+        emp_total = 0
+        for p in employee_payments:
+            emp_data.append([p.get("employeeName", ""), f"R$ {p.get('amount', 0):.2f}", p.get("paymentMethod", "").upper(), p.get("datetime", "")])
+            emp_total += p.get("amount", 0)
+        emp_data.append(["TOTAL PAGO", f"R$ {emp_total:.2f}", "", ""])
+        
+        if len(emp_data) > 1:
+            t4 = Table(emp_data, colWidths=[2*inch, 1.5*inch, 1.5*inch, 2*inch])
+            t4.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e40af')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#1e40af')),
+                ('TEXTCOLOR', (0, -1), (-1, -1), colors.whitesmoke),
+                ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ]))
+            elements4.append(t4)
+        else:
+            elements4.append(Paragraph("Nenhum pagamento de funcionario nesta data.", styles['Normal']))
+        
+        doc4.build(elements4)
+        emp_buf.seek(0)
+        zf.writestr(f"funcionarios_{date_str}.pdf", emp_buf.getvalue())
+    
+    zip_buffer.seek(0)
+    
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": f"attachment; filename=backup_cupim_{date_str}.zip"}
+    )
+
+
 # ==================== DATA MANAGEMENT ====================
 
 @api_router.delete("/data/clear")

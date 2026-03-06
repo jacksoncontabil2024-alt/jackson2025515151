@@ -364,7 +364,7 @@ function App() {
     const total = filteredDeliveries.reduce((acc, d) => acc + (d.amount + (d.amount2 || 0)), 0);
     const count = filteredDeliveries.length;
 
-    // Criar conteúdo do cupom
+    // Criar conteúdo do cupom - formatado para caber em uma página A4
     const cupomContent = `
       <!DOCTYPE html>
       <html>
@@ -373,69 +373,79 @@ function App() {
         <title>Cupom Fiscal - ${methodName}</title>
         <style>
           @media print {
-            body { margin: 0; padding: 20px; }
+            @page { margin: 10mm; size: A4; }
+            body { margin: 0; padding: 0; }
           }
+          * { box-sizing: border-box; }
           body {
             font-family: Arial, sans-serif;
             font-weight: bold;
-            font-size: 18px;
-            line-height: 1.6;
-            max-width: 80mm;
+            font-size: 12px;
+            line-height: 1.3;
+            width: 100%;
+            max-width: 190mm;
             margin: 0 auto;
-            padding: 20px;
+            padding: 10px;
           }
           .header {
             text-align: center;
-            border-bottom: 3px solid #000;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
           }
           .title {
-            font-size: 28px;
+            font-size: 20px;
             font-weight: bold;
-            margin: 10px 0;
+            margin: 4px 0;
           }
           .subtitle {
-            font-size: 22px;
+            font-size: 14px;
             font-weight: bold;
-            margin: 8px 0;
+            margin: 2px 0;
           }
           .section {
-            margin: 15px 0;
-            border-bottom: 2px dashed #000;
-            padding-bottom: 15px;
+            margin: 6px 0;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 6px;
           }
-          .item {
-            display: flex;
-            justify-content: space-between;
-            margin: 8px 0;
-            font-size: 16px;
-          }
-          .item-detail {
+          .payment-label {
             font-size: 14px;
-            color: #333;
-            margin-left: 10px;
+            text-align: center;
+            margin-bottom: 6px;
           }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+          }
+          th, td {
+            border: 1px solid #999;
+            padding: 3px 6px;
+            text-align: left;
+          }
+          th { background: #eee; font-size: 11px; }
+          td.val { text-align: right; white-space: nowrap; }
+          .detail { font-size: 9px; color: #555; }
           .total {
-            font-size: 24px;
+            font-size: 16px;
             font-weight: bold;
             text-align: center;
-            margin: 20px 0;
-            padding: 15px;
-            border: 3px solid #000;
+            margin: 8px 0;
+            padding: 8px;
+            border: 2px solid #000;
             background: #f0f0f0;
           }
           .footer {
             text-align: center;
-            margin-top: 20px;
-            font-size: 16px;
-            border-top: 3px solid #000;
-            padding-top: 15px;
+            margin-top: 8px;
+            font-size: 11px;
+            border-top: 2px solid #000;
+            padding-top: 6px;
           }
           .datetime {
             text-align: center;
-            font-size: 14px;
-            margin: 10px 0;
+            font-size: 10px;
+            margin: 2px 0;
           }
         </style>
       </head>
@@ -447,31 +457,38 @@ function App() {
         </div>
 
         <div class="section">
-          <div style="font-size: 22px; text-align: center; margin-bottom: 15px;">
-            FORMA DE PAGAMENTO: ${methodName}
-          </div>
+          <div class="payment-label">FORMA DE PAGAMENTO: ${methodName}</div>
         </div>
 
         <div class="section">
-          <div style="font-size: 20px; margin-bottom: 10px;">ENTREGAS:</div>
-          ${filteredDeliveries.map(d => `
-            <div class="item">
-              <span>#${d.seq} - ${d.clientName}</span>
-              <span>R$ ${(d.amount + (d.amount2 || 0)).toFixed(2)}</span>
-            </div>
-            ${d.amount2 ? `<div class="item-detail">(${d.paymentMethod.toUpperCase()}: R$ ${d.amount.toFixed(2)} + ${d.paymentMethod2?.toUpperCase()}: R$ ${d.amount2.toFixed(2)})</div>` : ''}
-            ${d.observation ? `<div class="item-detail">Obs: ${d.observation}</div>` : ''}
-          `).join('')}
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Cliente</th>
+                <th>Valor</th>
+                <th>Obs</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredDeliveries.map(d => `
+                <tr>
+                  <td>${d.seq}</td>
+                  <td>${d.clientName}${d.amount2 ? `<div class="detail">(${d.paymentMethod.toUpperCase()}: R$ ${d.amount.toFixed(2)} + ${d.paymentMethod2?.toUpperCase()}: R$ ${d.amount2.toFixed(2)})</div>` : ''}</td>
+                  <td class="val">R$ ${(d.amount + (d.amount2 || 0)).toFixed(2)}</td>
+                  <td>${d.observation || '-'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
         </div>
 
         <div class="total">
-          TOTAL: R$ ${total.toFixed(2)}<br>
-          QUANTIDADE: ${count} ${count === 1 ? 'entrega' : 'entregas'}
+          TOTAL: R$ ${total.toFixed(2)} | QTD: ${count} ${count === 1 ? 'entrega' : 'entregas'}
         </div>
 
         <div class="footer">
-          <div>CONFERÊNCIA DE ENTREGAS</div>
-          <div style="margin-top: 10px;">Obrigado!</div>
+          <div>CONFERENCIA DE ENTREGAS</div>
         </div>
       </body>
       </html>
@@ -670,13 +687,14 @@ function App() {
 
         {/* Main Tabs */}
         <Tabs defaultValue="cash" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-6 lg:w-auto bg-gradient-to-r from-blue-700 to-blue-600 shadow-lg">
-            <TabsTrigger value="cash" data-testid="tab-cash" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">Caixa</TabsTrigger>
-            <TabsTrigger value="deliveries" data-testid="tab-deliveries" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">Entregas</TabsTrigger>
-            <TabsTrigger value="summary" data-testid="tab-summary" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">Resumo</TabsTrigger>
-            <TabsTrigger value="reports" data-testid="tab-reports" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">Relatórios</TabsTrigger>
-            <TabsTrigger value="employees" data-testid="tab-employees" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">Funcionários</TabsTrigger>
-            <TabsTrigger value="deliverers" data-testid="tab-deliverers" className="data-[state=active]:bg-white data-[state=active]:text-blue-600">Entregadores</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-7 lg:w-auto bg-gradient-to-r from-blue-700 to-blue-600 shadow-lg">
+            <TabsTrigger value="cash" data-testid="tab-cash" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Caixa</TabsTrigger>
+            <TabsTrigger value="deliveries" data-testid="tab-deliveries" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Entregas</TabsTrigger>
+            <TabsTrigger value="summary" data-testid="tab-summary" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Resumo</TabsTrigger>
+            <TabsTrigger value="reports" data-testid="tab-reports" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Relatórios</TabsTrigger>
+            <TabsTrigger value="employees" data-testid="tab-employees" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Funcionários</TabsTrigger>
+            <TabsTrigger value="deliverers" data-testid="tab-deliverers" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Entregadores</TabsTrigger>
+            <TabsTrigger value="backup" data-testid="tab-backup" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Backup</TabsTrigger>
           </TabsList>
 
           {/* Deliveries Tab */}
@@ -1855,6 +1873,76 @@ function App() {
                       Nenhum entregador cadastrado
                     </div>
                   )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Backup Tab */}
+          <TabsContent value="backup" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  <Download className="h-6 w-6 text-blue-600" />
+                  Backup de Dados
+                </CardTitle>
+                <CardDescription>Gere um arquivo ZIP com Excel e PDFs de todos os dados da data selecionada</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                  <div>
+                    <Label htmlFor="backup-date">Selecione a Data</Label>
+                    <Input
+                      id="backup-date"
+                      data-testid="backup-date-input"
+                      type="date"
+                      className="mt-2"
+                      defaultValue={new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+                  <div>
+                    <Button
+                      data-testid="generate-backup-btn"
+                      className="bg-blue-600 hover:bg-blue-700 text-white w-full md:w-auto"
+                      onClick={async () => {
+                        const dateInput = document.getElementById('backup-date');
+                        const selectedDate = dateInput?.value;
+                        if (!selectedDate) {
+                          toast.error("Selecione uma data");
+                          return;
+                        }
+                        toast.info("Gerando backup... aguarde");
+                        try {
+                          const response = await axios.post(`${API}/backup`, { date: selectedDate }, { responseType: 'blob' });
+                          const url = window.URL.createObjectURL(new Blob([response.data]));
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.setAttribute('download', `backup_cupim_${selectedDate}.zip`);
+                          document.body.appendChild(link);
+                          link.click();
+                          link.remove();
+                          window.URL.revokeObjectURL(url);
+                          toast.success("Backup gerado com sucesso!");
+                        } catch (error) {
+                          console.error("Backup error:", error);
+                          toast.error("Erro ao gerar backup");
+                        }
+                      }}
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Gerar Backup
+                    </Button>
+                  </div>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
+                  <p className="font-semibold mb-1">O backup inclui:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Planilha Excel completa (entregas, caixa, funcionários)</li>
+                    <li>PDF - Resumo de Caixa (entradas e saídas)</li>
+                    <li>PDF - Relatório Geral de Entregas</li>
+                    <li>PDF - Relatórios por Forma de Pagamento</li>
+                    <li>PDF - Pagamentos de Funcionários</li>
+                  </ul>
                 </div>
               </CardContent>
             </Card>
