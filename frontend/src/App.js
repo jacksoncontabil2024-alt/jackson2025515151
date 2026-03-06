@@ -347,6 +347,150 @@ function App() {
     toast.success("Exportando Funcionários em PDF...");
   };
 
+  // Print cupom fiscal
+  const handlePrintCupom = (paymentMethod) => {
+    const methodNames = {
+      'pix': 'PIX',
+      'cartao': 'Cartão',
+      'dinheiro': 'Dinheiro',
+      'pago': 'Pago',
+      'vem_retirar': 'Vem Retirar',
+      'marcar': 'Marcar',
+      'pagou_conta': 'Pagou a Conta'
+    };
+
+    const methodName = methodNames[paymentMethod] || paymentMethod.toUpperCase();
+    const filteredDeliveries = deliveries.filter(d => d.paymentMethod === paymentMethod && !d.cancelado);
+    const total = filteredDeliveries.reduce((acc, d) => acc + (d.amount + (d.amount2 || 0)), 0);
+    const count = filteredDeliveries.length;
+
+    // Criar conteúdo do cupom
+    const cupomContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Cupom Fiscal - ${methodName}</title>
+        <style>
+          @media print {
+            body { margin: 0; padding: 20px; }
+          }
+          body {
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            font-size: 18px;
+            line-height: 1.6;
+            max-width: 80mm;
+            margin: 0 auto;
+            padding: 20px;
+          }
+          .header {
+            text-align: center;
+            border-bottom: 3px solid #000;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+          }
+          .title {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 10px 0;
+          }
+          .subtitle {
+            font-size: 22px;
+            font-weight: bold;
+            margin: 8px 0;
+          }
+          .section {
+            margin: 15px 0;
+            border-bottom: 2px dashed #000;
+            padding-bottom: 15px;
+          }
+          .item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 16px;
+          }
+          .item-detail {
+            font-size: 14px;
+            color: #333;
+            margin-left: 10px;
+          }
+          .total {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            border: 3px solid #000;
+            background: #f0f0f0;
+          }
+          .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 16px;
+            border-top: 3px solid #000;
+            padding-top: 15px;
+          }
+          .datetime {
+            text-align: center;
+            font-size: 14px;
+            margin: 10px 0;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="title">CUPIM NA TELHA</div>
+          <div class="subtitle">CUPOM FISCAL</div>
+          <div class="datetime">${new Date().toLocaleString('pt-BR')}</div>
+        </div>
+
+        <div class="section">
+          <div style="font-size: 22px; text-align: center; margin-bottom: 15px;">
+            FORMA DE PAGAMENTO: ${methodName}
+          </div>
+        </div>
+
+        <div class="section">
+          <div style="font-size: 20px; margin-bottom: 10px;">ENTREGAS:</div>
+          ${filteredDeliveries.map(d => `
+            <div class="item">
+              <span>#${d.seq} - ${d.clientName}</span>
+              <span>R$ ${(d.amount + (d.amount2 || 0)).toFixed(2)}</span>
+            </div>
+            ${d.amount2 ? `<div class="item-detail">(${d.paymentMethod.toUpperCase()}: R$ ${d.amount.toFixed(2)} + ${d.paymentMethod2?.toUpperCase()}: R$ ${d.amount2.toFixed(2)})</div>` : ''}
+            ${d.observation ? `<div class="item-detail">Obs: ${d.observation}</div>` : ''}
+          `).join('')}
+        </div>
+
+        <div class="total">
+          TOTAL: R$ ${total.toFixed(2)}<br>
+          QUANTIDADE: ${count} ${count === 1 ? 'entrega' : 'entregas'}
+        </div>
+
+        <div class="footer">
+          <div>CONFERÊNCIA DE ENTREGAS</div>
+          <div style="margin-top: 10px;">Obrigado!</div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Abrir janela de impressão
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    printWindow.document.write(cupomContent);
+    printWindow.document.close();
+    printWindow.focus();
+    
+    // Aguardar o carregamento e imprimir
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
+
+    toast.success("Abrindo cupom para impressão...");
+  };
+
   // Employee payment handlers
   const handleAddEmployeePayment = async (e) => {
     e.preventDefault();
