@@ -1320,17 +1320,30 @@ function App() {
 
                   {/* Dinheiro */}
                   <Card 
-                    className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-300 shadow-lg hover:shadow-xl transition-all cursor-pointer"
-                    onClick={() => setReportDetailMethod('dinheiro')}
+                    className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-300 shadow-lg hover:shadow-xl transition-all"
                     data-testid="report-card-dinheiro"
                   >
                     <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-green-700">
-                        <Wallet className="h-6 w-6" />
-                        Dinheiro
+                      <CardTitle className="flex items-center justify-between text-green-700">
+                        <div className="flex items-center gap-2">
+                          <Wallet className="h-6 w-6" />
+                          Dinheiro
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 w-8 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePrintCupom('dinheiro');
+                          }}
+                          title="Imprimir Cupom Fiscal"
+                        >
+                          <Printer className="h-4 w-4" />
+                        </Button>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent onClick={() => setReportDetailMethod('dinheiro')} className="cursor-pointer">
                       <div className="text-4xl font-bold text-green-900 mb-2">
                         R$ {reports.dinheiro.total.toFixed(2)}
                       </div>
@@ -1345,17 +1358,30 @@ function App() {
 
                   {/* Pago */}
                   <Card 
-                    className="bg-gradient-to-br from-amber-50 to-amber-100 border-2 border-amber-300 shadow-lg hover:shadow-xl transition-all cursor-pointer"
-                    onClick={() => setReportDetailMethod('pago')}
+                    className="bg-gradient-to-br from-amber-50 to-amber-100 border-2 border-amber-300 shadow-lg hover:shadow-xl transition-all"
                     data-testid="report-card-pago"
                   >
                     <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-amber-700">
-                        <CheckCircle className="h-6 w-6" />
-                        Pago
+                      <CardTitle className="flex items-center justify-between text-amber-700">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-6 w-6" />
+                          Pago
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 w-8 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePrintCupom('pago');
+                          }}
+                          title="Imprimir Cupom Fiscal"
+                        >
+                          <Printer className="h-4 w-4" />
+                        </Button>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent onClick={() => setReportDetailMethod('pago')} className="cursor-pointer">
                       <div className="text-4xl font-bold text-amber-900 mb-2">
                         R$ {reports.pago.total.toFixed(2)}
                       </div>
