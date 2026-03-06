@@ -100,36 +100,26 @@ function App() {
       .reduce((acc, d) => acc + d.amount, 0)
   };
 
-  // Calculate reports by payment method
+  // Calculate reports by payment method (includes paymentMethod2)
+  const calcReport = (method) => {
+    const total = deliveries.filter(d => !d.cancelado).reduce((acc, d) => {
+      let sum = 0;
+      if (d.paymentMethod === method) sum += d.amount;
+      if (d.paymentMethod2 === method) sum += (d.amount2 || 0);
+      return acc + sum;
+    }, 0);
+    const count = deliveries.filter(d => !d.cancelado && (d.paymentMethod === method || d.paymentMethod2 === method)).length;
+    return { total, count };
+  };
+
   const reports = {
-    pix: {
-      total: deliveries.filter(d => d.paymentMethod === "pix" && !d.cancelado).reduce((acc, d) => acc + d.amount, 0),
-      count: deliveries.filter(d => d.paymentMethod === "pix" && !d.cancelado).length
-    },
-    cartao: {
-      total: deliveries.filter(d => d.paymentMethod === "cartao" && !d.cancelado).reduce((acc, d) => acc + d.amount, 0),
-      count: deliveries.filter(d => d.paymentMethod === "cartao" && !d.cancelado).length
-    },
-    dinheiro: {
-      total: deliveries.filter(d => d.paymentMethod === "dinheiro" && !d.cancelado).reduce((acc, d) => acc + d.amount, 0),
-      count: deliveries.filter(d => d.paymentMethod === "dinheiro" && !d.cancelado).length
-    },
-    pago: {
-      total: deliveries.filter(d => d.paymentMethod === "pago" && !d.cancelado).reduce((acc, d) => acc + d.amount, 0),
-      count: deliveries.filter(d => d.paymentMethod === "pago" && !d.cancelado).length
-    },
-    vem_retirar: {
-      total: deliveries.filter(d => d.paymentMethod === "vem_retirar" && !d.cancelado).reduce((acc, d) => acc + d.amount, 0),
-      count: deliveries.filter(d => d.paymentMethod === "vem_retirar" && !d.cancelado).length
-    },
-    marcar: {
-      total: deliveries.filter(d => d.paymentMethod === "marcar" && !d.cancelado).reduce((acc, d) => acc + d.amount, 0),
-      count: deliveries.filter(d => d.paymentMethod === "marcar" && !d.cancelado).length
-    },
-    pagou_conta: {
-      total: deliveries.filter(d => d.paymentMethod === "pagou_conta" && !d.cancelado).reduce((acc, d) => acc + d.amount, 0),
-      count: deliveries.filter(d => d.paymentMethod === "pagou_conta" && !d.cancelado).length
-    }
+    pix: calcReport("pix"),
+    cartao: calcReport("cartao"),
+    dinheiro: calcReport("dinheiro"),
+    pago: calcReport("pago"),
+    vem_retirar: calcReport("vem_retirar"),
+    marcar: calcReport("marcar"),
+    pagou_conta: calcReport("pagou_conta")
   };
 
   // Cash handlers
@@ -360,8 +350,14 @@ function App() {
     };
 
     const methodName = methodNames[paymentMethod] || paymentMethod.toUpperCase();
-    const filteredDeliveries = deliveries.filter(d => d.paymentMethod === paymentMethod && !d.cancelado);
-    const total = filteredDeliveries.reduce((acc, d) => acc + (d.amount + (d.amount2 || 0)), 0);
+    const filteredDeliveries = deliveries.filter(d => !d.cancelado && (d.paymentMethod === paymentMethod || d.paymentMethod2 === paymentMethod));
+    const getAmount = (d) => {
+      let t = 0;
+      if (d.paymentMethod === paymentMethod) t += d.amount;
+      if (d.paymentMethod2 === paymentMethod) t += (d.amount2 || 0);
+      return t;
+    };
+    const total = filteredDeliveries.reduce((acc, d) => acc + getAmount(d), 0);
     const count = filteredDeliveries.length;
 
     // Criar conteúdo do cupom - formatado para caber em uma página A4
@@ -471,14 +467,16 @@ function App() {
               </tr>
             </thead>
             <tbody>
-              ${filteredDeliveries.map(d => `
+              ${filteredDeliveries.map(d => {
+                const amt = getAmount(d);
+                return `
                 <tr>
                   <td>${d.seq}</td>
-                  <td>${d.clientName}${d.amount2 ? `<div class="detail">(${d.paymentMethod.toUpperCase()}: R$ ${d.amount.toFixed(2)} + ${d.paymentMethod2?.toUpperCase()}: R$ ${d.amount2.toFixed(2)})</div>` : ''}</td>
-                  <td class="val">R$ ${(d.amount + (d.amount2 || 0)).toFixed(2)}</td>
+                  <td>${d.clientName}${d.paymentMethod2 ? `<div class="detail">(${d.paymentMethod.toUpperCase()}: R$ ${d.amount.toFixed(2)} + ${d.paymentMethod2?.toUpperCase()}: R$ ${(d.amount2 || 0).toFixed(2)})</div>` : ''}</td>
+                  <td class="val">R$ ${amt.toFixed(2)}</td>
                   <td>${d.observation || '-'}</td>
                 </tr>
-              `).join('')}
+              `}).join('')}
             </tbody>
           </table>
         </div>
@@ -1984,7 +1982,7 @@ function App() {
                 </thead>
                 <tbody>
                   {deliveries
-                    .filter(d => d.paymentMethod === reportDetailMethod && !d.cancelado)
+                    .filter(d => !d.cancelado && (d.paymentMethod === reportDetailMethod || d.paymentMethod2 === reportDetailMethod))
                     .sort((a, b) => b.seq - a.seq)
                     .map(delivery => {
                       const getMarcadoStatus = () => {
@@ -2001,6 +1999,12 @@ function App() {
                       };
                       
                       const isMarcado = getMarcadoStatus();
+                      const methodAmount = (() => {
+                        let t = 0;
+                        if (delivery.paymentMethod === reportDetailMethod) t += delivery.amount;
+                        if (delivery.paymentMethod2 === reportDetailMethod) t += (delivery.amount2 || 0);
+                        return t;
+                      })();
                       
                       return (
                         <tr 
@@ -2019,10 +2023,10 @@ function App() {
                           </td>
                           <td className="border p-2 font-semibold">{delivery.clientName}</td>
                           <td className="border p-2">
-                            R$ {(delivery.amount + (delivery.amount2 || 0)).toFixed(2)}
-                            {delivery.amount2 && (
+                            R$ {methodAmount.toFixed(2)}
+                            {delivery.paymentMethod2 && (
                               <div className="text-xs text-gray-500 mt-1">
-                                ({delivery.paymentMethod.toUpperCase()}: R$ {delivery.amount.toFixed(2)} + {delivery.paymentMethod2?.toUpperCase()}: R$ {delivery.amount2.toFixed(2)})
+                                (Total: R$ {(delivery.amount + (delivery.amount2 || 0)).toFixed(2)} = {delivery.paymentMethod.toUpperCase()}: R$ {delivery.amount.toFixed(2)} + {delivery.paymentMethod2?.toUpperCase()}: R$ {(delivery.amount2 || 0).toFixed(2)})
                               </div>
                             )}
                           </td>
@@ -2052,7 +2056,7 @@ function App() {
                     })}
                 </tbody>
               </table>
-              {deliveries.filter(d => d.paymentMethod === reportDetailMethod && !d.cancelado).length === 0 && (
+              {deliveries.filter(d => !d.cancelado && (d.paymentMethod === reportDetailMethod || d.paymentMethod2 === reportDetailMethod)).length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   Nenhuma entrega encontrada com esta forma de pagamento
                 </div>
@@ -2062,8 +2066,13 @@ function App() {
           <div className="flex justify-between items-center pt-4 border-t">
             <div className="text-lg font-bold">
               Total: R$ {deliveries
-                .filter(d => d.paymentMethod === reportDetailMethod && !d.cancelado)
-                .reduce((acc, d) => acc + d.amount, 0)
+                .filter(d => !d.cancelado)
+                .reduce((acc, d) => {
+                  let sum = 0;
+                  if (d.paymentMethod === reportDetailMethod) sum += d.amount;
+                  if (d.paymentMethod2 === reportDetailMethod) sum += (d.amount2 || 0);
+                  return acc + sum;
+                }, 0)
                 .toFixed(2)}
             </div>
             <Button onClick={() => setReportDetailMethod(null)}>

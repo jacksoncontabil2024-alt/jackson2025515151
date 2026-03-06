@@ -461,8 +461,12 @@ async def export_reports_pdf():
     total_count = 0
     
     for method in methods:
-        filtered = [d for d in deliveries if d.get("paymentMethod") == method and not d.get("cancelado")]
-        total = sum(d.get("amount", 0) for d in filtered)
+        filtered = [d for d in deliveries if (d.get("paymentMethod") == method or d.get("paymentMethod2") == method) and not d.get("cancelado")]
+        total = sum(
+            (d.get("amount", 0) if d.get("paymentMethod") == method else 0) +
+            ((d.get("amount2") or 0) if d.get("paymentMethod2") == method else 0)
+            for d in filtered
+        )
         count = len(filtered)
         
         data.append([method_names[method], f"R$ {total:.2f}", str(count)])
@@ -717,8 +721,12 @@ async def generate_backup(request: BackupRequest):
         total_geral = 0
         total_count = 0
         for m in methods:
-            filtered = [d for d in deliveries if d.get("paymentMethod") == m and not d.get("cancelado")]
-            total = sum(d.get("amount", 0) for d in filtered)
+            filtered = [d for d in deliveries if (d.get("paymentMethod") == m or d.get("paymentMethod2") == m) and not d.get("cancelado")]
+            total = sum(
+                (d.get("amount", 0) if d.get("paymentMethod") == m else 0) +
+                ((d.get("amount2") or 0) if d.get("paymentMethod2") == m else 0)
+                for d in filtered
+            )
             count = len(filtered)
             pay_data.append([method_names[m], f"R$ {total:.2f}", str(count)])
             total_geral += total

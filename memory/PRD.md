@@ -30,6 +30,7 @@ Sistema de gerenciamento de entregas para o negócio "Cupim na Telha". Inclui co
 - Reformatado cupom fiscal para caber em uma página A4 (tabela, fontes menores, @page rules)
 - Implementado endpoint POST /api/backup (gera ZIP com 5 arquivos)
 - Implementada aba "Backup de Dados" com date picker e botão de download
+- **Sincronização da 2a forma de pagamento nos relatórios**: Agora os relatórios consideram paymentMethod2 + amount2. Exemplo: entrega com R$50 dinheiro + R$75 cartão → R$50 vai pro relatório de Dinheiro e R$75 pro de Cartão. Aplicado em: cards dos relatórios, modal de detalhes, cupom fiscal, PDFs de exportação e PDFs do backup.
 - Testes: 100% backend (18/18), 100% frontend
 
 ## Backlog
