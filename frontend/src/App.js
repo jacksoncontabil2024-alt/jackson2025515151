@@ -1396,17 +1396,30 @@ function App() {
 
                   {/* Vem Retirar */}
                   <Card 
-                    className="bg-gradient-to-br from-rose-50 to-rose-100 border-2 border-rose-300 shadow-lg hover:shadow-xl transition-all cursor-pointer"
-                    onClick={() => setReportDetailMethod('vem_retirar')}
+                    className="bg-gradient-to-br from-rose-50 to-rose-100 border-2 border-rose-300 shadow-lg hover:shadow-xl transition-all"
                     data-testid="report-card-vem-retirar"
                   >
                     <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-rose-700">
-                        <Package className="h-6 w-6" />
-                        Vem Retirar
+                      <CardTitle className="flex items-center justify-between text-rose-700">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-6 w-6" />
+                          Vem Retirar
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 w-8 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePrintCupom('vem_retirar');
+                          }}
+                          title="Imprimir Cupom Fiscal"
+                        >
+                          <Printer className="h-4 w-4" />
+                        </Button>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent onClick={() => setReportDetailMethod('vem_retirar')} className="cursor-pointer">
                       <div className="text-4xl font-bold text-rose-900 mb-2">
                         R$ {reports.vem_retirar.total.toFixed(2)}
                       </div>
@@ -1421,17 +1434,30 @@ function App() {
 
                   {/* Marcar */}
                   <Card 
-                    className="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-300 shadow-lg hover:shadow-xl transition-all cursor-pointer"
-                    onClick={() => setReportDetailMethod('marcar')}
+                    className="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-300 shadow-lg hover:shadow-xl transition-all"
                     data-testid="report-card-marcar"
                   >
                     <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-purple-700">
-                        <CheckCircle className="h-6 w-6" />
-                        Marcar
+                      <CardTitle className="flex items-center justify-between text-purple-700">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-6 w-6" />
+                          Marcar
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 w-8 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePrintCupom('marcar');
+                          }}
+                          title="Imprimir Cupom Fiscal"
+                        >
+                          <Printer className="h-4 w-4" />
+                        </Button>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent onClick={() => setReportDetailMethod('marcar')} className="cursor-pointer">
                       <div className="text-4xl font-bold text-purple-900 mb-2">
                         R$ {reports.marcar.total.toFixed(2)}
                       </div>
@@ -1446,17 +1472,30 @@ function App() {
 
                   {/* Pagou a Conta */}
                   <Card 
-                    className="bg-gradient-to-br from-teal-50 to-teal-100 border-2 border-teal-300 shadow-lg hover:shadow-xl transition-all cursor-pointer"
-                    onClick={() => setReportDetailMethod('pagou_conta')}
+                    className="bg-gradient-to-br from-teal-50 to-teal-100 border-2 border-teal-300 shadow-lg hover:shadow-xl transition-all"
                     data-testid="report-card-pagou-conta"
                   >
                     <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-teal-700">
-                        <CheckCircle className="h-6 w-6" />
-                        Pagou a Conta
+                      <CardTitle className="flex items-center justify-between text-teal-700">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-6 w-6" />
+                          Pagou a Conta
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 w-8 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePrintCupom('pagou_conta');
+                          }}
+                          title="Imprimir Cupom Fiscal"
+                        >
+                          <Printer className="h-4 w-4" />
+                        </Button>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent onClick={() => setReportDetailMethod('pagou_conta')} className="cursor-pointer">
                       <div className="text-4xl font-bold text-teal-900 mb-2">
                         R$ {reports.pagou_conta.total.toFixed(2)}
                       </div>
