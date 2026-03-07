@@ -360,7 +360,7 @@ function App() {
     const total = filteredDeliveries.reduce((acc, d) => acc + getAmount(d), 0);
     const count = filteredDeliveries.length;
 
-    // Criar conteúdo do cupom - formatado para caber em uma página A4
+    // Criar conteúdo do cupom - formatado para impressora térmica 80mm (Bematech MP-4200 TH)
     const cupomContent = `
       <!DOCTYPE html>
       <html>
@@ -369,79 +369,83 @@ function App() {
         <title>Cupom Fiscal - ${methodName}</title>
         <style>
           @media print {
-            @page { margin: 10mm; size: A4; }
+            @page { margin: 0; size: 80mm auto; }
             body { margin: 0; padding: 0; }
           }
-          * { box-sizing: border-box; }
+          * { box-sizing: border-box; margin: 0; padding: 0; }
           body {
             font-family: Arial, sans-serif;
             font-weight: bold;
-            font-size: 12px;
-            line-height: 1.3;
-            width: 100%;
-            max-width: 190mm;
+            font-size: 16px;
+            line-height: 1.4;
+            width: 72mm;
             margin: 0 auto;
-            padding: 10px;
+            padding: 4mm;
           }
           .header {
             text-align: center;
-            border-bottom: 2px solid #000;
-            padding-bottom: 6px;
-            margin-bottom: 8px;
-          }
-          .title {
-            font-size: 20px;
-            font-weight: bold;
-            margin: 4px 0;
-          }
-          .subtitle {
-            font-size: 14px;
-            font-weight: bold;
-            margin: 2px 0;
-          }
-          .section {
-            margin: 6px 0;
-            border-bottom: 1px dashed #000;
-            padding-bottom: 6px;
-          }
-          .payment-label {
-            font-size: 14px;
-            text-align: center;
+            border-bottom: 3px solid #000;
+            padding-bottom: 4px;
             margin-bottom: 6px;
           }
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 11px;
+          .title {
+            font-size: 22px;
+            font-weight: bold;
           }
-          th, td {
-            border: 1px solid #999;
-            padding: 3px 6px;
-            text-align: left;
+          .subtitle {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 2px;
           }
-          th { background: #eee; font-size: 11px; }
-          td.val { text-align: right; white-space: nowrap; }
-          .detail { font-size: 9px; color: #555; }
-          .total {
+          .datetime {
+            font-size: 14px;
+            margin-top: 2px;
+          }
+          .method {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            border-bottom: 2px dashed #000;
+            padding: 6px 0;
+            margin-bottom: 6px;
+          }
+          .item {
+            border-bottom: 1px dashed #ccc;
+            padding: 4px 0;
+            font-size: 16px;
+          }
+          .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+          }
+          .item-num { font-size: 14px; }
+          .item-name { font-size: 16px; font-weight: bold; flex: 1; margin: 0 4px; }
+          .item-val { font-size: 18px; font-weight: bold; white-space: nowrap; }
+          .item-detail { font-size: 12px; color: #333; margin-top: 1px; }
+          .item-obs { font-size: 12px; color: #555; }
+          .total-box {
+            border: 3px solid #000;
+            text-align: center;
+            padding: 8px 4px;
+            margin: 8px 0;
+          }
+          .total-value {
+            font-size: 26px;
+            font-weight: bold;
+          }
+          .total-count {
             font-size: 16px;
             font-weight: bold;
-            text-align: center;
-            margin: 8px 0;
-            padding: 8px;
-            border: 2px solid #000;
-            background: #f0f0f0;
+            margin-top: 2px;
           }
           .footer {
             text-align: center;
-            margin-top: 8px;
-            font-size: 11px;
-            border-top: 2px solid #000;
+            font-size: 14px;
+            font-weight: bold;
+            border-top: 3px solid #000;
             padding-top: 6px;
-          }
-          .datetime {
-            text-align: center;
-            font-size: 10px;
-            margin: 2px 0;
+            margin-top: 4px;
           }
         </style>
       </head>
@@ -452,42 +456,28 @@ function App() {
           <div class="datetime">${new Date().toLocaleString('pt-BR')}</div>
         </div>
 
-        <div class="section">
-          <div class="payment-label">FORMA DE PAGAMENTO: ${methodName}</div>
+        <div class="method">${methodName.toUpperCase()}</div>
+
+        ${filteredDeliveries.map(d => {
+          const amt = getAmount(d);
+          return `
+          <div class="item">
+            <div class="item-row">
+              <span class="item-num">#${d.seq}</span>
+              <span class="item-name">${d.clientName}</span>
+              <span class="item-val">R$ ${amt.toFixed(2)}</span>
+            </div>
+            ${d.paymentMethod2 ? `<div class="item-detail">(${d.paymentMethod.toUpperCase()}: ${d.amount.toFixed(2)} + ${d.paymentMethod2.toUpperCase()}: ${(d.amount2 || 0).toFixed(2)})</div>` : ''}
+            ${d.observation ? `<div class="item-obs">Obs: ${d.observation}</div>` : ''}
+          </div>`;
+        }).join('')}
+
+        <div class="total-box">
+          <div class="total-value">R$ ${total.toFixed(2)}</div>
+          <div class="total-count">${count} ${count === 1 ? 'ENTREGA' : 'ENTREGAS'}</div>
         </div>
 
-        <div class="section">
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Cliente</th>
-                <th>Valor</th>
-                <th>Obs</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${filteredDeliveries.map(d => {
-                const amt = getAmount(d);
-                return `
-                <tr>
-                  <td>${d.seq}</td>
-                  <td>${d.clientName}${d.paymentMethod2 ? `<div class="detail">(${d.paymentMethod.toUpperCase()}: R$ ${d.amount.toFixed(2)} + ${d.paymentMethod2?.toUpperCase()}: R$ ${(d.amount2 || 0).toFixed(2)})</div>` : ''}</td>
-                  <td class="val">R$ ${amt.toFixed(2)}</td>
-                  <td>${d.observation || '-'}</td>
-                </tr>
-              `}).join('')}
-            </tbody>
-          </table>
-        </div>
-
-        <div class="total">
-          TOTAL: R$ ${total.toFixed(2)} | QTD: ${count} ${count === 1 ? 'entrega' : 'entregas'}
-        </div>
-
-        <div class="footer">
-          <div>CONFERENCIA DE ENTREGAS</div>
-        </div>
+        <div class="footer">CONFERENCIA DE ENTREGAS</div>
       </body>
       </html>
     `;

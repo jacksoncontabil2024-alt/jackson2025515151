@@ -578,9 +578,9 @@ async def generate_backup(request: BackupRequest):
     date_filter = {"datetime": {"$gte": day_start, "$lt": day_end}}
     
     # Fetch all data for the date
-    deliveries = await db.deliveries.find({**date_filter, **{"_id": 0}}).sort("seq", 1).to_list(10000)
-    cash_entries = await db.cash_entries.find({**date_filter, **{"_id": 0}}).to_list(10000)
-    employee_payments = await db.employee_payments.find({**date_filter, **{"_id": 0}}).to_list(10000)
+    deliveries = await db.deliveries.find(date_filter, {"_id": 0}).sort("seq", 1).to_list(10000)
+    cash_entries = await db.cash_entries.find(date_filter, {"_id": 0}).to_list(10000)
+    employee_payments = await db.employee_payments.find(date_filter, {"_id": 0}).to_list(10000)
     deliverers_list = await db.deliverers.find({}, {"_id": 0}).to_list(1000)
     deliverers_dict = {d["id"]: d["name"] for d in deliverers_list}
     

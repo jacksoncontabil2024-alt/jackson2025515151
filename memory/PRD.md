@@ -27,10 +27,11 @@ Sistema de gerenciamento de entregas para o negócio "Cupim na Telha". Inclui co
 
 ## O que foi feito nesta sessão (06/02/2026)
 - Corrigido contraste de cores das abas (texto branco/80% nas abas inativas)
-- Reformatado cupom fiscal para caber em uma página A4 (tabela, fontes menores, @page rules)
+- Reformatado cupom fiscal para impressora térmica 80mm Bematech MP-4200 TH (fontes grandes bold, layout 72mm)
 - Implementado endpoint POST /api/backup (gera ZIP com 5 arquivos)
 - Implementada aba "Backup de Dados" com date picker e botão de download
-- **Sincronização da 2a forma de pagamento nos relatórios**: Agora os relatórios consideram paymentMethod2 + amount2. Exemplo: entrega com R$50 dinheiro + R$75 cartão → R$50 vai pro relatório de Dinheiro e R$75 pro de Cartão. Aplicado em: cards dos relatórios, modal de detalhes, cupom fiscal, PDFs de exportação e PDFs do backup.
+- **Sincronização da 2a forma de pagamento nos relatórios**: paymentMethod2 + amount2 sincronizados em cards, modal detalhes, cupom fiscal, PDFs e backup
+- **Bug fix backup vazio**: Corrigido filtro de data que misturava _id:0 (projeção) com o filtro de query MongoDB
 - Testes: 100% backend (18/18), 100% frontend
 
 ## Backlog
