@@ -795,6 +795,107 @@ async def generate_backup(request: BackupRequest):
     )
 
 
+@api_router.post("/backup/full")
+async def generate_full_backup():
+    """Generate a full backup of ALL data (no date filter) - used before clearing data."""
+    deliveries = await db.deliveries.find({}, {"_id": 0}).sort("seq", 1).to_list(100000)
+    cash_entries = await db.cash_entries.find({}, {"_id": 0}).to_list(100000)
+    employee_payments = await db.employee_payments.find({}, {"_id": 0}).to_list(100000)
+    deliverers_list = await db.deliverers.find({}, {"_id": 0}).to_list(1000)
+    deliverers_dict = {d["id"]: d["name"] for d in deliverers_list}
+    
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    zip_buffer = io.BytesIO()
+    
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+        # Excel
+        wb = Workbook()
+        ws_del = wb.active
+        ws_del.title = "Entregas"
+        ws_del.append(["#", "Cliente", "Valor Total", "Pagamento 1", "Valor 1", "Pagamento 2", "Valor 2", "Valor Recebido", "Troco", "Observacao", "Status", "Entregador", "Cadastro", "Saiu", "Entregue"])
+        for d in deliveries:
+            status = "Cancelado" if d.get("cancelado") else ("Entregue" if d.get("foiEntregue") else ("Em Entrega" if d.get("saiuParaEntrega") else "Pendente"))
+            ws_del.append([
+                d.get("seq", ""), d.get("clientName", ""),
+                d.get("amount", 0) + (d.get("amount2") or 0),
+                d.get("paymentMethod", "").upper(), d.get("amount", 0),
+                (d.get("paymentMethod2") or "").upper() or "-", d.get("amount2") or "-",
+                d.get("valorRecebido") or "-", d.get("troco") or "-",
+                d.get("observation") or "-", status,
+                deliverers_dict.get(d.get("delivererId", ""), "-"),
+                d.get("datetime", ""), d.get("horaSaida") or "-", d.get("horaEntregue") or "-"
+            ])
+        
+        ws_cash = wb.create_sheet("Caixa")
+        ws_cash.append(["Tipo", "Valor", "Descricao", "Data/Hora"])
+        for e in cash_entries:
+            ws_cash.append([e.get("type", "").upper(), e.get("value", 0), e.get("desc", ""), e.get("datetime", "")])
+        
+        ws_emp = wb.create_sheet("Funcionarios")
+        ws_emp.append(["Nome", "Valor", "Pagamento", "Data/Hora"])
+        for p in employee_payments:
+            ws_emp.append([p.get("employeeName", ""), p.get("amount", 0), p.get("paymentMethod", "").upper(), p.get("datetime", "")])
+        
+        ws_dlv = wb.create_sheet("Entregadores")
+        ws_dlv.append(["Nome"])
+        for d in deliverers_list:
+            ws_dlv.append([d.get("name", "")])
+        
+        excel_buf = io.BytesIO()
+        wb.save(excel_buf)
+        excel_buf.seek(0)
+        zf.writestr(f"backup_completo_{today}.xlsx", excel_buf.getvalue())
+        
+        # Summary PDF
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle('BkpFullTitle', parent=styles['Heading1'], fontSize=18, textColor=colors.HexColor('#1e40af'), spaceAfter=20)
+        
+        summary_buf = io.BytesIO()
+        doc = SimpleDocTemplate(summary_buf, pagesize=A4)
+        elements = []
+        elements.append(Paragraph(f"Backup Completo - {today}", title_style))
+        elements.append(Spacer(1, 0.2*inch))
+        elements.append(Paragraph(f"Total de entregas: {len(deliveries)}", styles['Normal']))
+        elements.append(Paragraph(f"Total de caixa: {len(cash_entries)}", styles['Normal']))
+        elements.append(Paragraph(f"Total de funcionarios: {len(employee_payments)}", styles['Normal']))
+        elements.append(Paragraph(f"Total de entregadores: {len(deliverers_list)}", styles['Normal']))
+        elements.append(Spacer(1, 0.3*inch))
+        
+        if deliveries:
+            del_data = [["#", "Cliente", "Valor", "Pag.", "Status", "Data"]]
+            for d in deliveries:
+                status = "Cancelado" if d.get("cancelado") else ("Entregue" if d.get("foiEntregue") else ("Em Entrega" if d.get("saiuParaEntrega") else "Pendente"))
+                del_data.append([
+                    f"#{d.get('seq', '')}", d.get("clientName", ""),
+                    f"R$ {(d.get('amount', 0) + (d.get('amount2') or 0)):.2f}",
+                    d.get("paymentMethod", "").upper(), status,
+                    d.get("datetime", "")[:10]
+                ])
+            t = Table(del_data, colWidths=[0.5*inch, 1.5*inch, 1*inch, 0.8*inch, 0.8*inch, 1*inch])
+            t.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e40af')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, -1), 7),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ]))
+            elements.append(t)
+        
+        doc.build(elements)
+        summary_buf.seek(0)
+        zf.writestr(f"backup_completo_{today}.pdf", summary_buf.getvalue())
+    
+    zip_buffer.seek(0)
+    
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": f"attachment; filename=backup_completo_{today}.zip"}
+    )
+
+
 # ==================== DATA MANAGEMENT ====================
 
 @api_router.delete("/data/clear")

@@ -523,16 +523,35 @@ function App() {
     }
   };
 
-  // Clear all data
+  // Clear all data - with automatic backup before clearing
   const handleClearAll = async () => {
-    if (window.confirm("⚠️ ATENÇÃO! Isso vai apagar TODOS os dados (entregas, caixa, entregadores). Deseja continuar?")) {
-      try {
-        await axios.delete(`${API}/data/clear`);
-        toast.success("Todos os dados foram apagados!");
-        loadData();
-      } catch (error) {
-        toast.error("Erro ao limpar dados");
-      }
+    if (!window.confirm("ATENÇÃO! Isso vai apagar TODOS os dados.\n\nUm backup será gerado automaticamente antes de apagar.\n\nDeseja continuar?")) {
+      return;
+    }
+    if (!window.confirm("TEM CERTEZA? Esta ação não pode ser desfeita!\n\nClique OK para gerar o backup e depois apagar os dados.")) {
+      return;
+    }
+
+    try {
+      toast.info("Gerando backup de segurança antes de apagar...");
+      const response = await axios.post(`${API}/backup/full`, {}, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      const today = new Date().toISOString().split('T')[0];
+      link.setAttribute('download', `backup_antes_limpar_${today}.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Backup salvo! Agora limpando dados...");
+
+      await axios.delete(`${API}/data/clear`);
+      toast.success("Todos os dados foram apagados! Backup salvo no seu computador.");
+      loadData();
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Erro ao processar. Os dados NÃO foram apagados.");
     }
   };
 
