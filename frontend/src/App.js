@@ -369,83 +369,66 @@ function App() {
         <title>Cupom Fiscal - ${methodName}</title>
         <style>
           @media print {
-            @page { margin: 0; size: 80mm auto; }
-            body { margin: 0; padding: 0; }
+            @page { margin: 0mm; padding: 0mm; size: 80mm auto; }
+            html, body { margin: 0 !important; padding: 0 !important; width: 80mm !important; height: auto !important; }
           }
           * { box-sizing: border-box; margin: 0; padding: 0; }
-          body {
+          html, body {
             font-family: Arial, sans-serif;
             font-weight: bold;
             font-size: 16px;
-            line-height: 1.4;
-            width: 72mm;
-            margin: 0 auto;
-            padding: 4mm;
+            line-height: 1.3;
+            width: 80mm;
+            margin: 0;
+            padding: 2mm;
+            height: auto;
+            overflow: visible;
           }
           .header {
             text-align: center;
-            border-bottom: 3px solid #000;
-            padding-bottom: 4px;
-            margin-bottom: 6px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 2px;
+            margin-bottom: 3px;
           }
-          .title {
-            font-size: 22px;
-            font-weight: bold;
-          }
-          .subtitle {
-            font-size: 18px;
-            font-weight: bold;
-            margin-top: 2px;
-          }
-          .datetime {
-            font-size: 14px;
-            margin-top: 2px;
-          }
+          .title { font-size: 20px; font-weight: bold; }
+          .subtitle { font-size: 16px; font-weight: bold; }
+          .datetime { font-size: 12px; }
           .method {
             text-align: center;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
-            border-bottom: 2px dashed #000;
-            padding: 6px 0;
-            margin-bottom: 6px;
+            border-bottom: 1px dashed #000;
+            padding: 3px 0;
+            margin-bottom: 3px;
           }
           .item {
-            border-bottom: 1px dashed #ccc;
-            padding: 4px 0;
-            font-size: 16px;
+            border-bottom: 1px dashed #aaa;
+            padding: 2px 0;
           }
           .item-row {
             display: flex;
             justify-content: space-between;
             align-items: baseline;
           }
-          .item-num { font-size: 14px; }
-          .item-name { font-size: 16px; font-weight: bold; flex: 1; margin: 0 4px; }
-          .item-val { font-size: 18px; font-weight: bold; white-space: nowrap; }
-          .item-detail { font-size: 12px; color: #333; margin-top: 1px; }
-          .item-obs { font-size: 12px; color: #555; }
+          .item-num { font-size: 13px; }
+          .item-name { font-size: 15px; font-weight: bold; flex: 1; margin: 0 3px; overflow: hidden; }
+          .item-val { font-size: 16px; font-weight: bold; white-space: nowrap; }
+          .item-detail { font-size: 11px; color: #333; }
+          .item-obs { font-size: 11px; color: #555; }
           .total-box {
-            border: 3px solid #000;
+            border: 2px solid #000;
             text-align: center;
-            padding: 8px 4px;
-            margin: 8px 0;
+            padding: 4px 2px;
+            margin: 4px 0;
           }
-          .total-value {
-            font-size: 26px;
-            font-weight: bold;
-          }
-          .total-count {
-            font-size: 16px;
-            font-weight: bold;
-            margin-top: 2px;
-          }
+          .total-value { font-size: 24px; font-weight: bold; }
+          .total-count { font-size: 14px; font-weight: bold; }
           .footer {
             text-align: center;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
-            border-top: 3px solid #000;
-            padding-top: 6px;
-            margin-top: 4px;
+            border-top: 2px solid #000;
+            padding-top: 3px;
           }
         </style>
       </head>
