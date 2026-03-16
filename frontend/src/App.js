@@ -360,7 +360,7 @@ function App() {
     const total = filteredDeliveries.reduce((acc, d) => acc + getAmount(d), 0);
     const count = filteredDeliveries.length;
 
-    // Criar conteúdo do cupom - formatado para impressora térmica 80mm (Bematech MP-4200 TH)
+    // Criar conteúdo do cupom - formatado para impressora térmica 80mm contínua
     const cupomContent = `
       <!DOCTYPE html>
       <html>
@@ -368,113 +368,102 @@ function App() {
         <meta charset="UTF-8">
         <title>Cupom Fiscal - ${methodName}</title>
         <style>
-          @media print {
-            @page { margin: 0mm; padding: 0mm; size: 80mm auto; }
-            html, body { margin: 0 !important; padding: 0 !important; width: 80mm !important; height: auto !important; }
-          }
-          * { box-sizing: border-box; margin: 0; padding: 0; }
-          html, body {
+          @page { margin: 0mm !important; padding: 0mm !important; size: 80mm 3000mm; }
+          * { box-sizing: border-box; margin: 0; padding: 0; page-break-before: avoid !important; page-break-after: avoid !important; page-break-inside: avoid !important; }
+          html { margin: 0; padding: 0; }
+          body {
             font-family: Arial, sans-serif;
             font-weight: bold;
-            font-size: 16px;
-            line-height: 1.3;
+            font-size: 15px;
+            line-height: 1.2;
             width: 80mm;
             margin: 0;
-            padding: 2mm;
-            height: auto;
-            overflow: visible;
+            padding: 1mm;
           }
           .header {
             text-align: center;
             border-bottom: 2px solid #000;
             padding-bottom: 2px;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
           }
           .title { font-size: 20px; font-weight: bold; }
-          .subtitle { font-size: 16px; font-weight: bold; }
-          .datetime { font-size: 12px; }
+          .subtitle { font-size: 15px; font-weight: bold; }
+          .datetime { font-size: 11px; }
           .method {
             text-align: center;
-            font-size: 18px;
+            font-size: 17px;
             font-weight: bold;
             border-bottom: 1px dashed #000;
-            padding: 3px 0;
-            margin-bottom: 3px;
+            padding: 2px 0;
+            margin-bottom: 2px;
           }
           .item {
             border-bottom: 1px dashed #aaa;
-            padding: 2px 0;
+            padding: 1px 0;
           }
           .item-row {
             display: flex;
             justify-content: space-between;
             align-items: baseline;
           }
-          .item-num { font-size: 13px; }
-          .item-name { font-size: 15px; font-weight: bold; flex: 1; margin: 0 3px; overflow: hidden; }
-          .item-val { font-size: 16px; font-weight: bold; white-space: nowrap; }
-          .item-detail { font-size: 11px; color: #333; }
-          .item-obs { font-size: 11px; color: #555; }
+          .item-num { font-size: 12px; }
+          .item-name { font-size: 14px; font-weight: bold; flex: 1; margin: 0 2px; overflow: hidden; }
+          .item-val { font-size: 15px; font-weight: bold; white-space: nowrap; }
+          .item-detail { font-size: 10px; color: #333; }
+          .item-obs { font-size: 10px; color: #555; }
           .total-box {
             border: 2px solid #000;
             text-align: center;
-            padding: 4px 2px;
-            margin: 4px 0;
+            padding: 3px 2px;
+            margin: 3px 0;
           }
-          .total-value { font-size: 24px; font-weight: bold; }
-          .total-count { font-size: 14px; font-weight: bold; }
+          .total-value { font-size: 22px; font-weight: bold; }
+          .total-count { font-size: 13px; font-weight: bold; }
           .footer {
             text-align: center;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
             border-top: 2px solid #000;
-            padding-top: 3px;
+            padding-top: 2px;
           }
         </style>
       </head>
       <body>
-        <div class="header">
-          <div class="title">CUPIM NA TELHA</div>
-          <div class="subtitle">CUPOM FISCAL</div>
-          <div class="datetime">${new Date().toLocaleString('pt-BR')}</div>
+        <div id="cupom-content">
+          <div class="header">
+            <div class="title">CUPIM NA TELHA</div>
+            <div class="subtitle">CUPOM FISCAL</div>
+            <div class="datetime">${new Date().toLocaleString('pt-BR')}</div>
+          </div>
+          <div class="method">${methodName.toUpperCase()}</div>
+          ${filteredDeliveries.map(d => {
+            const amt = getAmount(d);
+            return `
+            <div class="item">
+              <div class="item-row">
+                <span class="item-num">#${d.seq}</span>
+                <span class="item-name">${d.clientName}</span>
+                <span class="item-val">R$ ${amt.toFixed(2)}</span>
+              </div>
+              ${d.paymentMethod2 ? `<div class="item-detail">(${d.paymentMethod.toUpperCase()}: ${d.amount.toFixed(2)} + ${d.paymentMethod2.toUpperCase()}: ${(d.amount2 || 0).toFixed(2)})</div>` : ''}
+              ${d.observation ? `<div class="item-obs">Obs: ${d.observation}</div>` : ''}
+            </div>`;
+          }).join('')}
+          <div class="total-box">
+            <div class="total-value">R$ ${total.toFixed(2)}</div>
+            <div class="total-count">${count} ${count === 1 ? 'ENTREGA' : 'ENTREGAS'}</div>
+          </div>
+          <div class="footer">CONFERENCIA DE ENTREGAS</div>
         </div>
-
-        <div class="method">${methodName.toUpperCase()}</div>
-
-        ${filteredDeliveries.map(d => {
-          const amt = getAmount(d);
-          return `
-          <div class="item">
-            <div class="item-row">
-              <span class="item-num">#${d.seq}</span>
-              <span class="item-name">${d.clientName}</span>
-              <span class="item-val">R$ ${amt.toFixed(2)}</span>
-            </div>
-            ${d.paymentMethod2 ? `<div class="item-detail">(${d.paymentMethod.toUpperCase()}: ${d.amount.toFixed(2)} + ${d.paymentMethod2.toUpperCase()}: ${(d.amount2 || 0).toFixed(2)})</div>` : ''}
-            ${d.observation ? `<div class="item-obs">Obs: ${d.observation}</div>` : ''}
-          </div>`;
-        }).join('')}
-
-        <div class="total-box">
-          <div class="total-value">R$ ${total.toFixed(2)}</div>
-          <div class="total-count">${count} ${count === 1 ? 'ENTREGA' : 'ENTREGAS'}</div>
-        </div>
-
-        <div class="footer">CONFERENCIA DE ENTREGAS</div>
       </body>
       </html>
     `;
 
     // Abrir janela de impressão
-    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    const printWindow = window.open('', '_blank', 'width=400,height=600');
     printWindow.document.write(cupomContent);
     printWindow.document.close();
-    printWindow.focus();
-    
-    // Aguardar o carregamento e imprimir
-    setTimeout(() => {
-      printWindow.print();
-    }, 250);
+    setTimeout(() => { printWindow.print(); }, 200);
 
     toast.success("Abrindo cupom para impressão...");
   };
