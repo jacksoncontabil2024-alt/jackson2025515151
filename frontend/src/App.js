@@ -368,63 +368,63 @@ function App() {
         <meta charset="UTF-8">
         <title>Cupom Fiscal - ${methodName}</title>
         <style>
-          @page { margin: 0mm !important; padding: 0mm !important; size: 80mm 3000mm; }
-          * { box-sizing: border-box; margin: 0; padding: 0; page-break-before: avoid !important; page-break-after: avoid !important; page-break-inside: avoid !important; }
+          @page { margin: 0mm !important; }
+          * { box-sizing: border-box; margin: 0; padding: 0; }
           html { margin: 0; padding: 0; }
           body {
             font-family: Arial, sans-serif;
             font-weight: bold;
-            font-size: 15px;
-            line-height: 1.2;
-            width: 80mm;
+            font-size: 22px;
+            line-height: 1.3;
+            width: 100%;
             margin: 0;
-            padding: 1mm;
+            padding: 3mm;
           }
           .header {
             text-align: center;
-            border-bottom: 2px solid #000;
-            padding-bottom: 2px;
-            margin-bottom: 2px;
+            border-bottom: 3px solid #000;
+            padding-bottom: 4px;
+            margin-bottom: 4px;
           }
-          .title { font-size: 20px; font-weight: bold; }
-          .subtitle { font-size: 15px; font-weight: bold; }
-          .datetime { font-size: 11px; }
+          .title { font-size: 30px; font-weight: bold; }
+          .subtitle { font-size: 24px; font-weight: bold; }
+          .datetime { font-size: 18px; margin-top: 2px; }
           .method {
             text-align: center;
-            font-size: 17px;
+            font-size: 26px;
             font-weight: bold;
-            border-bottom: 1px dashed #000;
-            padding: 2px 0;
-            margin-bottom: 2px;
+            border-bottom: 2px dashed #000;
+            padding: 4px 0;
+            margin-bottom: 4px;
           }
           .item {
-            border-bottom: 1px dashed #aaa;
-            padding: 1px 0;
+            border-bottom: 1px dashed #999;
+            padding: 3px 0;
           }
           .item-row {
             display: flex;
             justify-content: space-between;
             align-items: baseline;
           }
-          .item-num { font-size: 12px; }
-          .item-name { font-size: 14px; font-weight: bold; flex: 1; margin: 0 2px; overflow: hidden; }
-          .item-val { font-size: 15px; font-weight: bold; white-space: nowrap; }
-          .item-detail { font-size: 10px; color: #333; }
-          .item-obs { font-size: 10px; color: #555; }
+          .item-num { font-size: 20px; font-weight: bold; }
+          .item-name { font-size: 22px; font-weight: bold; flex: 1; margin: 0 4px; }
+          .item-val { font-size: 24px; font-weight: bold; white-space: nowrap; }
+          .item-detail { font-size: 16px; color: #333; }
+          .item-obs { font-size: 16px; color: #555; }
           .total-box {
-            border: 2px solid #000;
+            border: 3px solid #000;
             text-align: center;
-            padding: 3px 2px;
-            margin: 3px 0;
+            padding: 6px 3px;
+            margin: 6px 0;
           }
-          .total-value { font-size: 22px; font-weight: bold; }
-          .total-count { font-size: 13px; font-weight: bold; }
+          .total-value { font-size: 34px; font-weight: bold; }
+          .total-count { font-size: 22px; font-weight: bold; }
           .footer {
             text-align: center;
-            font-size: 12px;
+            font-size: 20px;
             font-weight: bold;
-            border-top: 2px solid #000;
-            padding-top: 2px;
+            border-top: 3px solid #000;
+            padding-top: 4px;
           }
         </style>
       </head>
