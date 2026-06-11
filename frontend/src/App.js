@@ -56,6 +56,22 @@ function App() {
   // Reports detail modal state
   const [reportDetailMethod, setReportDetailMethod] = useState(null);
 
+  // Cores para entregadores
+  const DELIVERER_COLORS = [
+    { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-300', hex: '#dc2626' },
+    { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-300', hex: '#2563eb' },
+    { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-300', hex: '#16a34a' },
+    { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-300', hex: '#ea580c' },
+    { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-300', hex: '#9333ea' },
+    { bg: 'bg-pink-100', text: 'text-pink-700', border: 'border-pink-300', hex: '#db2777' },
+    { bg: 'bg-teal-100', text: 'text-teal-700', border: 'border-teal-300', hex: '#0d9488' },
+    { bg: 'bg-yellow-100', text: 'text-yellow-700', border: 'border-yellow-300', hex: '#ca8a04' },
+  ];
+  const getDelivererColor = (delivererId) => {
+    const idx = deliverers.findIndex(d => d.id === delivererId);
+    return idx >= 0 ? DELIVERER_COLORS[idx % DELIVERER_COLORS.length] : null;
+  };
+
   // Load data
   const loadData = async () => {
     try {
@@ -666,14 +682,12 @@ function App() {
 
         {/* Main Tabs */}
         <Tabs defaultValue="cash" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-7 lg:w-auto bg-gradient-to-r from-blue-700 to-blue-600 shadow-lg">
+          <TabsList className="grid w-full grid-cols-5 lg:w-auto bg-gradient-to-r from-blue-700 to-blue-600 shadow-lg">
             <TabsTrigger value="cash" data-testid="tab-cash" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Caixa</TabsTrigger>
             <TabsTrigger value="deliveries" data-testid="tab-deliveries" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Entregas</TabsTrigger>
             <TabsTrigger value="summary" data-testid="tab-summary" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Resumo</TabsTrigger>
             <TabsTrigger value="reports" data-testid="tab-reports" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Relatórios</TabsTrigger>
-            <TabsTrigger value="employees" data-testid="tab-employees" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Funcionários</TabsTrigger>
             <TabsTrigger value="deliverers" data-testid="tab-deliverers" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Entregadores</TabsTrigger>
-            <TabsTrigger value="backup" data-testid="tab-backup" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Backup</TabsTrigger>
           </TabsList>
 
           {/* Deliveries Tab */}
@@ -845,9 +859,14 @@ function App() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todos os Entregadores</SelectItem>
-                        {deliverers.map(d => (
-                          <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                        ))}
+                        {deliverers.map(d => {
+                          const color = getDelivererColor(d.id);
+                          return (
+                            <SelectItem key={d.id} value={d.id}>
+                              <span className={`font-bold ${color?.text || ''}`}>{d.name}</span>
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1079,7 +1098,7 @@ function App() {
                               <td className="border p-2 text-xs max-w-[150px] truncate" title={delivery.observation}>
                                 {delivery.observation || '-'}
                               </td>
-                              <td className="border p-2">{deliverer ? deliverer.name : '-'}</td>
+                              <td className="border p-2">{deliverer ? <span className={`font-bold px-2 py-0.5 rounded ${getDelivererColor(delivery.delivererId)?.bg || ''} ${getDelivererColor(delivery.delivererId)?.text || ''}`}>{deliverer.name}</span> : '-'}</td>
                               <td className="border p-2 text-xs">{new Date(delivery.datetime).toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'})}</td>
                               <td className="border p-2 text-xs">{delivery.horaSaida ? new Date(delivery.horaSaida).toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'}) : '-'}</td>
                               <td className="border p-2 text-xs">{delivery.horaEntregue ? new Date(delivery.horaEntregue).toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'}) : '-'}</td>
@@ -1180,7 +1199,7 @@ function App() {
                                 )}
                               </td>
                               <td className="border p-2">{valorAReceber}</td>
-                              <td className="border p-2">{deliverer ? deliverer.name : "-"}</td>
+                              <td className="border p-2">{deliverer ? <span className={`font-bold px-2 py-0.5 rounded ${getDelivererColor(delivery.delivererId)?.bg || ''} ${getDelivererColor(delivery.delivererId)?.text || ''}`}>{deliverer.name}</span> : "-"}</td>
                               <td className="border p-2">
                                 {delivery.cancelado ? (
                                   <Badge variant="destructive">Cancelado</Badge>
@@ -1818,13 +1837,14 @@ function App() {
                   {deliverers.map(deliverer => {
                     const delivererDeliveries = deliveries.filter(d => d.delivererId === deliverer.id);
                     const completed = delivererDeliveries.filter(d => d.foiEntregue).length;
+                    const color = getDelivererColor(deliverer.id);
                     return (
-                      <Card key={deliverer.id} data-testid={`deliverer-item-${deliverer.id}`}>
+                      <Card key={deliverer.id} data-testid={`deliverer-item-${deliverer.id}`} className={`border-2 ${color?.border || ''}`}>
                         <CardContent className="pt-6">
                           <div className="flex items-start justify-between">
                             <div>
-                              <h3 className="font-semibold text-lg flex items-center gap-2">
-                                <Users className="h-5 w-5 text-blue-500" />
+                              <h3 className={`font-bold text-lg flex items-center gap-2 ${color?.text || ''}`}>
+                                <Users className="h-5 w-5" />
                                 {deliverer.name}
                               </h3>
                               <div className="text-sm text-gray-600 mt-2">
@@ -2086,9 +2106,14 @@ function App() {
                   <SelectValue placeholder="Selecione um entregador" />
                 </SelectTrigger>
                 <SelectContent>
-                  {deliverers.map(d => (
-                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                  ))}
+                  {deliverers.map(d => {
+                    const color = getDelivererColor(d.id);
+                    return (
+                      <SelectItem key={d.id} value={d.id}>
+                        <span className={`font-bold ${color?.text || ''}`}>{d.name}</span>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
