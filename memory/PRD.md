@@ -1,53 +1,39 @@
 # Cupim na Telha - PRD
 
 ## Problema Original
-Sistema de gerenciamento de entregas para o negócio "Cupim na Telha". Inclui controle de caixa, entregas, entregadores, pagamentos de funcionários, relatórios e exportações.
+Sistema de gerenciamento de entregas para o negócio "Cupim na Telha".
 
 ## Arquitetura
-- **Frontend:** React + TailwindCSS + ShadCN UI (monolítico em `/app/frontend/src/App.js`)
-- **Backend:** FastAPI + Motor (MongoDB async) (monolítico em `/app/backend/server.py`)
+- **Frontend:** React + TailwindCSS + ShadCN UI (`/app/frontend/src/App.js`)
+- **Backend:** FastAPI + Motor MongoDB (`/app/backend/server.py`)
 - **Database:** MongoDB
-- **Sem autenticação**
-- **Idioma:** Português (PT-BR)
+- **Sem autenticação** | **Idioma:** Português (PT-BR)
 
 ## Funcionalidades Implementadas
-- CRUD de entregas com sequência automática, duplo pagamento, cancelar/descancelar
-- CRUD de caixa (entradas/saídas)
-- CRUD de entregadores com atribuição a entregas
-- CRUD de pagamentos de funcionários
-- Busca multi-número com ponto-e-vírgula (ex: "27;45")
-- Filtros por status (Todos, Pendentes, Em Entrega, Concluídas, Canceladas)
-- Checklist persistente nos relatórios por forma de pagamento
-- 7 formas de pagamento: PIX, Cartão, Dinheiro, Pago, Vem Retirar, Marcar, Pagou a Conta
-- Exportações: Excel, PDF Resumo, PDF Relatórios, PDF Funcionários
-- Impressão de cupom fiscal (formatado para A4)
-- Backup de dados (ZIP com Excel + 4 PDFs por data)
-- Pool de clientes com autocomplete
-- 7 abas: Caixa, Entregas, Resumo, Relatórios, Funcionários, Entregadores, Backup
-
-## O que foi feito nesta sessão (06/02/2026)
-- Corrigido contraste de cores das abas (texto branco/80% nas abas inativas)
-- Reformatado cupom fiscal para impressora térmica 80mm Bematech MP-4200 TH (fontes grandes bold, layout 72mm)
-- Implementado endpoint POST /api/backup (gera ZIP com 5 arquivos por data)
-- Implementado endpoint POST /api/backup/full (gera ZIP com TODOS os dados)
-- Implementada aba "Backup de Dados" com date picker e botão "Gerar Backup"
-- Sincronização da 2a forma de pagamento nos relatórios (paymentMethod2 + amount2)
-- Bug fix backup vazio: Corrigido filtro de data MongoDB (_id:0 na projeção, não no filtro)
-- **Backup automático antes de limpar**: "Limpar Tudo" agora exige dupla confirmação e baixa backup ZIP completo antes de apagar
-- Testes: 100% backend, 100% frontend
-
-## Backlog
-### P2 - Refatoração
-- Quebrar App.js (~2200 linhas) em componentes menores
-- Organizar server.py com APIRouter separados
-- Limpar arquivos Docker/instalação do diretório raiz
+- CRUD entregas (duplo pagamento, cancelar/descancelar, checklist persistente)
+- CRUD caixa (entradas/saídas)
+- CRUD entregadores com cores distintas
+- CRUD pagamentos de funcionários
+- **Controle de Estoque**: cadastro (nome, categoria, preço, qtd), vendas (entrada/vendidos/restante), filtro por categoria
+- Busca multi-número (ponto-e-vírgula)
+- Filtros por status e entregador
+- Exportações: Excel (com aba Estoque), PDFs
+- Cupom fiscal para Bematech MP-4200 TH (80mm)
+- Backup por data e backup completo (com proteção antes de limpar)
+- Modal edição com 2a forma de pagamento
+- 6 abas: Caixa, Entregas, Resumo, Relatórios, Estoque, Entregadores
 
 ## Endpoints da API
 - `/api/cash` - GET, POST, DELETE
 - `/api/deliveries` - GET, POST, PATCH, DELETE
 - `/api/deliverers` - GET, POST, DELETE
 - `/api/employee-payments` - GET, POST, DELETE
+- `/api/stock` - GET, POST, PATCH, DELETE
 - `/api/clients/pool` - GET
 - `/api/export/[excel|summary-pdf|reports-pdf|employees-pdf]` - GET
-- `/api/backup` - POST (body: {date: "YYYY-MM-DD"})
+- `/api/backup` - POST (por data)
+- `/api/backup/full` - POST (completo)
 - `/api/data/clear` - DELETE
+
+## Backlog
+- Refatoração: quebrar App.js e server.py em módulos menores

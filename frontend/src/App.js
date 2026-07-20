@@ -40,6 +40,11 @@ function App() {
   const [employeePayments, setEmployeePayments] = useState([]);
   const [employeeForm, setEmployeeForm] = useState({ employeeName: "", amount: "", paymentMethod: "pix" });
 
+  // Stock states
+  const [stockItems, setStockItems] = useState([]);
+  const [stockForm, setStockForm] = useState({ name: "", category: "", price: "", quantity: "" });
+  const [stockCategoryFilter, setStockCategoryFilter] = useState("all");
+
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -75,18 +80,20 @@ function App() {
   // Load data
   const loadData = async () => {
     try {
-      const [cashRes, deliveriesRes, deliverersRes, poolRes, employeeRes] = await Promise.all([
+      const [cashRes, deliveriesRes, deliverersRes, poolRes, employeeRes, stockRes] = await Promise.all([
         axios.get(`${API}/cash`),
         axios.get(`${API}/deliveries`),
         axios.get(`${API}/deliverers`),
         axios.get(`${API}/clients/pool`),
-        axios.get(`${API}/employee-payments`)
+        axios.get(`${API}/employee-payments`),
+        axios.get(`${API}/stock`)
       ]);
       setCashEntries(cashRes.data);
       setDeliveries(deliveriesRes.data);
       setDeliverers(deliverersRes.data);
       setClientsPool(poolRes.data.items || []);
       setEmployeePayments(employeeRes.data);
+      setStockItems(stockRes.data);
       setLoading(false);
     } catch (error) {
       console.error("Error loading data:", error);
@@ -253,6 +260,8 @@ function App() {
         clientName: editForm.clientName,
         amount: parseFloat(editForm.amount),
         paymentMethod: editForm.paymentMethod,
+        paymentMethod2: editForm.paymentMethod2 || null,
+        amount2: editForm.amount2 ? parseFloat(editForm.amount2) : null,
         valorRecebido: editForm.paymentMethod === "dinheiro" && editForm.valorRecebido 
           ? parseFloat(editForm.valorRecebido) 
           : null,
@@ -682,11 +691,12 @@ function App() {
 
         {/* Main Tabs */}
         <Tabs defaultValue="cash" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto bg-gradient-to-r from-blue-700 to-blue-600 shadow-lg">
+          <TabsList className="grid w-full grid-cols-6 lg:w-auto bg-gradient-to-r from-blue-700 to-blue-600 shadow-lg">
             <TabsTrigger value="cash" data-testid="tab-cash" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Caixa</TabsTrigger>
             <TabsTrigger value="deliveries" data-testid="tab-deliveries" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Entregas</TabsTrigger>
             <TabsTrigger value="summary" data-testid="tab-summary" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Resumo</TabsTrigger>
             <TabsTrigger value="reports" data-testid="tab-reports" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Relatórios</TabsTrigger>
+            <TabsTrigger value="stock" data-testid="tab-stock" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Estoque</TabsTrigger>
             <TabsTrigger value="deliverers" data-testid="tab-deliverers" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Entregadores</TabsTrigger>
           </TabsList>
 
@@ -1795,6 +1805,229 @@ function App() {
             </Card>
           </TabsContent>
 
+          {/* Stock Tab */}
+          <TabsContent value="stock" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Adicionar Item ao Estoque</CardTitle>
+                <CardDescription>Cadastre novos itens para controlar</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  try {
+                    await axios.post(`${API}/stock`, {
+                      name: stockForm.name,
+                      category: stockForm.category,
+                      price: parseFloat(stockForm.price) || 0,
+                      quantity: parseInt(stockForm.quantity) || 0
+                    });
+                    toast.success("Item cadastrado!");
+                    setStockForm({ name: "", category: "", price: "", quantity: "" });
+                    loadData();
+                  } catch (error) {
+                    toast.error("Erro ao cadastrar item");
+                  }
+                }} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                      <Label>Nome do Item</Label>
+                      <Input
+                        data-testid="stock-name"
+                        placeholder="Ex: Marmitex G"
+                        value={stockForm.name}
+                        onChange={(e) => setStockForm({...stockForm, name: e.target.value})}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label>Categoria</Label>
+                      <Input
+                        data-testid="stock-category"
+                        placeholder="Ex: Marmitex, Bebida"
+                        value={stockForm.category}
+                        onChange={(e) => setStockForm({...stockForm, category: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <Label>Preço (R$)</Label>
+                      <Input
+                        data-testid="stock-price"
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={stockForm.price}
+                        onChange={(e) => setStockForm({...stockForm, price: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <Label>Quantidade</Label>
+                      <Input
+                        data-testid="stock-quantity"
+                        type="number"
+                        placeholder="0"
+                        value={stockForm.quantity}
+                        onChange={(e) => setStockForm({...stockForm, quantity: e.target.value})}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <Button type="submit" data-testid="add-stock-btn" className="bg-blue-600 hover:bg-blue-700 text-white">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Cadastrar Item
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Stock Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+                <CardContent className="pt-6">
+                  <div className="text-sm opacity-80">Total de Itens</div>
+                  <div className="text-3xl font-bold">{stockItems.length}</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
+                <CardContent className="pt-6">
+                  <div className="text-sm opacity-80">Unidades em Estoque</div>
+                  <div className="text-3xl font-bold">{stockItems.reduce((acc, i) => acc + i.quantity, 0)}</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+                <CardContent className="pt-6">
+                  <div className="text-sm opacity-80">Valor Total em Estoque</div>
+                  <div className="text-3xl font-bold">R$ {stockItems.reduce((acc, i) => acc + (i.price * i.quantity), 0).toFixed(2)}</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Stock Filter */}
+            {stockItems.length > 0 && (
+              <Card>
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-4">
+                    <Label>Filtrar por Categoria:</Label>
+                    <Select value={stockCategoryFilter} onValueChange={setStockCategoryFilter}>
+                      <SelectTrigger className="w-[200px]" data-testid="stock-category-filter">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        {[...new Set(stockItems.map(i => i.category).filter(Boolean))].map(cat => (
+                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Stock Items List */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Itens em Estoque ({stockItems.filter(i => stockCategoryFilter === "all" || i.category === stockCategoryFilter).length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {stockItems.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">Nenhum item cadastrado</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="bg-gray-50">
+                          <th className="border p-2 text-left">Item</th>
+                          <th className="border p-2 text-left">Categoria</th>
+                          <th className="border p-2 text-left">Preço Unit.</th>
+                          <th className="border p-2 text-center">Entrada</th>
+                          <th className="border p-2 text-center">Vendidos</th>
+                          <th className="border p-2 text-center">Restante</th>
+                          <th className="border p-2 text-left">Valor Restante</th>
+                          <th className="border p-2 text-center">Baixa/Entrada</th>
+                          <th className="border p-2 text-center">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {stockItems
+                          .filter(i => stockCategoryFilter === "all" || i.category === stockCategoryFilter)
+                          .map(item => {
+                          const entrada = item.quantity + (item.sold || 0);
+                          return (
+                          <tr key={item.id} className={`hover:bg-gray-50 ${item.quantity === 0 ? 'bg-red-50' : item.quantity <= 5 ? 'bg-yellow-50' : ''}`} data-testid={`stock-item-${item.id}`}>
+                            <td className="border p-2 font-bold">{item.name}</td>
+                            <td className="border p-2">
+                              {item.category ? <Badge variant="outline">{item.category}</Badge> : '-'}
+                            </td>
+                            <td className="border p-2">R$ {item.price.toFixed(2)}</td>
+                            <td className="border p-2 text-center font-semibold text-blue-600">{entrada}</td>
+                            <td className="border p-2 text-center font-bold text-orange-600">{item.sold || 0}</td>
+                            <td className="border p-2 text-center">
+                              <span className={`text-lg font-bold ${item.quantity === 0 ? 'text-red-600' : item.quantity <= 5 ? 'text-yellow-600' : 'text-green-600'}`}>
+                                {item.quantity}
+                              </span>
+                            </td>
+                            <td className="border p-2 font-semibold">R$ {(item.price * item.quantity).toFixed(2)}</td>
+                            <td className="border p-2 text-center">
+                              <div className="flex items-center justify-center gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 w-8 p-0 text-red-600 border-red-300 hover:bg-red-50"
+                                  data-testid={`stock-decrease-${item.id}`}
+                                  disabled={item.quantity <= 0}
+                                  onClick={async () => {
+                                    try {
+                                      await axios.patch(`${API}/stock/${item.id}`, { quantity: item.quantity - 1, sold: (item.sold || 0) + 1 });
+                                      loadData();
+                                    } catch (error) { toast.error("Erro"); }
+                                  }}
+                                >-</Button>
+                                <span className="w-8 text-center font-bold">{item.quantity}</span>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 w-8 p-0 text-green-600 border-green-300 hover:bg-green-50"
+                                  data-testid={`stock-increase-${item.id}`}
+                                  onClick={async () => {
+                                    try {
+                                      await axios.patch(`${API}/stock/${item.id}`, { quantity: item.quantity + 1 });
+                                      loadData();
+                                    } catch (error) { toast.error("Erro"); }
+                                  }}
+                                >+</Button>
+                              </div>
+                            </td>
+                            <td className="border p-2 text-center">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 text-red-600 hover:bg-red-50"
+                                data-testid={`stock-delete-${item.id}`}
+                                onClick={async () => {
+                                  if (window.confirm(`Remover "${item.name}" do estoque?`)) {
+                                    try {
+                                      await axios.delete(`${API}/stock/${item.id}`);
+                                      toast.success("Item removido");
+                                      loadData();
+                                    } catch (error) { toast.error("Erro ao remover"); }
+                                  }
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </td>
+                          </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Deliverers Tab */}
           <TabsContent value="deliverers" className="space-y-4">
             <Card>
@@ -2194,6 +2427,41 @@ function App() {
                       <SelectItem value="pagou_conta">Pagou a Conta</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Forma de Pagamento 2 (Opcional)</Label>
+                    <Select
+                      value={editForm.paymentMethod2 || "none"}
+                      onValueChange={(value) => setEditForm({...editForm, paymentMethod2: value === "none" ? "" : value, amount2: value === "none" ? "" : editForm.amount2})}
+                    >
+                      <SelectTrigger data-testid="edit-payment-method-2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Nenhuma</SelectItem>
+                        <SelectItem value="pix">PIX</SelectItem>
+                        <SelectItem value="cartao">Cartão</SelectItem>
+                        <SelectItem value="dinheiro">Dinheiro</SelectItem>
+                        <SelectItem value="pago">Pago</SelectItem>
+                        <SelectItem value="vem_retirar">Vem Retirar</SelectItem>
+                        <SelectItem value="marcar">Marcar</SelectItem>
+                        <SelectItem value="pagou_conta">Pagou a Conta</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {editForm.paymentMethod2 && (
+                    <div>
+                      <Label>Valor 2 (R$)</Label>
+                      <Input
+                        data-testid="edit-amount-2"
+                        type="number"
+                        step="0.01"
+                        value={editForm.amount2}
+                        onChange={(e) => setEditForm({...editForm, amount2: e.target.value})}
+                      />
+                    </div>
+                  )}
                 </div>
                 {editForm.paymentMethod === "dinheiro" && (
                   <div>

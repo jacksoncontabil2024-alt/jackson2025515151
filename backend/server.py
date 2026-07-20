@@ -142,6 +142,32 @@ class EmployeePaymentCreate(BaseModel):
     paymentMethod: str
 
 
+# Stock Item Model
+class StockItem(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    category: str = ""
+    price: float = 0.0
+    quantity: int = 0
+    sold: int = 0
+    datetime: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class StockItemCreate(BaseModel):
+    name: str
+    category: str = ""
+    price: float = 0.0
+    quantity: int = 0
+
+class StockItemUpdate(BaseModel):
+    name: Optional[str] = None
+    category: Optional[str] = None
+    price: Optional[float] = None
+    quantity: Optional[int] = None
+    sold: Optional[int] = None
+
+
 # ==================== CASH ENDPOINTS ====================
 
 @api_router.post("/cash", response_model=CashEntry)
@@ -363,6 +389,22 @@ async def export_excel():
             payment.get("datetime", "")
         ])
     
+    # Stock sheet
+    stock_items = await db.stock_items.find({}, {"_id": 0}).to_list(10000)
+    ws_stock = wb.create_sheet("Estoque")
+    ws_stock.append(["Item", "Categoria", "Preço Unit.", "Entrada", "Vendidos", "Restante", "Valor Restante"])
+    for item in stock_items:
+        entrada = item.get("quantity", 0) + item.get("sold", 0)
+        ws_stock.append([
+            item.get("name", ""),
+            item.get("category", ""),
+            item.get("price", 0),
+            entrada,
+            item.get("sold", 0),
+            item.get("quantity", 0),
+            item.get("price", 0) * item.get("quantity", 0)
+        ])
+    
     # Save to bytes
     output = io.BytesIO()
     wb.save(output)
@@ -554,6 +596,39 @@ async def export_employees_pdf():
         media_type="application/pdf",
         headers={"Content-Disposition": "attachment; filename=pagamentos_funcionarios.pdf"}
     )
+
+
+# ==================== STOCK ENDPOINTS ====================
+
+@api_router.post("/stock", response_model=StockItem)
+async def create_stock_item(input: StockItemCreate):
+    item = StockItem(**input.model_dump())
+    doc = item.model_dump()
+    await db.stock_items.insert_one(doc)
+    return item
+
+@api_router.get("/stock", response_model=List[StockItem])
+async def get_stock_items():
+    items = await db.stock_items.find({}, {"_id": 0}).to_list(10000)
+    return items
+
+@api_router.patch("/stock/{item_id}")
+async def update_stock_item(item_id: str, update: StockItemUpdate):
+    update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No data to update")
+    await db.stock_items.update_one({"id": item_id}, {"$set": update_data})
+    updated = await db.stock_items.find_one({"id": item_id}, {"_id": 0})
+    if not updated:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return updated
+
+@api_router.delete("/stock/{item_id}")
+async def delete_stock_item(item_id: str):
+    result = await db.stock_items.delete_one({"id": item_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return {"message": "Item deleted"}
 
 
 # ==================== BACKUP ENDPOINT ====================
