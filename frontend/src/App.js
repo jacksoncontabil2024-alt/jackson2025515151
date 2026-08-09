@@ -34,6 +34,7 @@ function App() {
     paymentMethod2: "",
     amount2: "",
     valorRecebido: "",
+    valorRecebido2: "",
     observation: ""
   });
   const [delivererForm, setDelivererForm] = useState({ name: "" });
@@ -52,7 +53,7 @@ function App() {
 
   // Edit modal state
   const [editingDelivery, setEditingDelivery] = useState(null);
-  const [editForm, setEditForm] = useState({ clientName: "", amount: "", paymentMethod: "", paymentMethod2: "", amount2: "", valorRecebido: "", observation: "" });
+  const [editForm, setEditForm] = useState({ clientName: "", amount: "", paymentMethod: "", paymentMethod2: "", amount2: "", valorRecebido: "", valorRecebido2: "", observation: "" });
   
   // Deliverer selection modal state
   const [selectingDelivererFor, setSelectingDelivererFor] = useState(null);
@@ -185,11 +186,14 @@ function App() {
         valorRecebido: deliveryForm.paymentMethod === "dinheiro" && deliveryForm.valorRecebido 
           ? parseFloat(deliveryForm.valorRecebido) 
           : null,
+        valorRecebido2: deliveryForm.paymentMethod2 === "dinheiro" && deliveryForm.valorRecebido2
+          ? parseFloat(deliveryForm.valorRecebido2)
+          : null,
         observation: deliveryForm.observation || null
       };
       await axios.post(`${API}/deliveries`, payload);
       toast.success("Entrega criada!");
-      setDeliveryForm({ clientName: "", amount: "", paymentMethod: "pix", paymentMethod2: "", amount2: "", valorRecebido: "", observation: "" });
+      setDeliveryForm({ clientName: "", amount: "", paymentMethod: "pix", paymentMethod2: "", amount2: "", valorRecebido: "", valorRecebido2: "", observation: "" });
       loadData();
     } catch (error) {
       toast.error("Erro ao criar entrega");
@@ -249,6 +253,7 @@ function App() {
       paymentMethod2: delivery.paymentMethod2 || "",
       amount2: delivery.amount2 ? delivery.amount2.toString() : "",
       valorRecebido: delivery.valorRecebido ? delivery.valorRecebido.toString() : "",
+      valorRecebido2: delivery.valorRecebido2 ? delivery.valorRecebido2.toString() : "",
       observation: delivery.observation || ""
     });
   };
@@ -264,6 +269,12 @@ function App() {
         amount2: editForm.amount2 ? parseFloat(editForm.amount2) : null,
         valorRecebido: editForm.paymentMethod === "dinheiro" && editForm.valorRecebido 
           ? parseFloat(editForm.valorRecebido) 
+          : null,
+        valorRecebido2: editForm.paymentMethod2 === "dinheiro" && editForm.valorRecebido2
+          ? parseFloat(editForm.valorRecebido2)
+          : null,
+        troco2: editForm.paymentMethod2 === "dinheiro" && editForm.valorRecebido2 && editForm.amount2
+          ? parseFloat(editForm.valorRecebido2) - parseFloat(editForm.amount2)
           : null,
         observation: editForm.observation || null
       };
@@ -806,6 +817,25 @@ function App() {
                         />
                       </div>
                     )}
+                    {deliveryForm.paymentMethod2 === "dinheiro" && (
+                      <div>
+                        <Label htmlFor="valorRecebido2">Valor Recebido 2 (R$)</Label>
+                        <Input
+                          id="valorRecebido2"
+                          data-testid="delivery-valor-recebido2"
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={deliveryForm.valorRecebido2 || ""}
+                          onChange={(e) => setDeliveryForm({...deliveryForm, valorRecebido2: e.target.value})}
+                        />
+                        {deliveryForm.valorRecebido2 && deliveryForm.amount2 && parseFloat(deliveryForm.valorRecebido2) > parseFloat(deliveryForm.amount2) && (
+                          <p className="text-sm text-green-600 mt-1 font-bold">
+                            Troco 2: R$ {(parseFloat(deliveryForm.valorRecebido2) - parseFloat(deliveryForm.amount2)).toFixed(2)}
+                          </p>
+                        )}
+                      </div>
+                    )}
                     <div className="col-span-full">
                       <Label htmlFor="observation">Observação (Opcional)</Label>
                       <Input
@@ -903,6 +933,8 @@ function App() {
                           <th className="border p-2 text-left">Pagamento 2</th>
                           <th className="border p-2 text-left">Valor Recebido</th>
                           <th className="border p-2 text-left">Troco</th>
+                          <th className="border p-2 text-left">Vl. Receb. 2</th>
+                          <th className="border p-2 text-left">Troco 2</th>
                           <th className="border p-2 text-left">Observação</th>
                           <th className="border p-2 text-left">Cadastro</th>
                           <th className="border p-2 text-left">Saiu</th>
@@ -938,6 +970,12 @@ function App() {
                               </td>
                               <td className="border p-2">
                                 {delivery.troco ? `R$ ${delivery.troco.toFixed(2)}` : '-'}
+                              </td>
+                              <td className="border p-2">
+                                {delivery.valorRecebido2 ? `R$ ${delivery.valorRecebido2.toFixed(2)}` : '-'}
+                              </td>
+                              <td className="border p-2">
+                                {delivery.troco2 ? `R$ ${delivery.troco2.toFixed(2)}` : '-'}
                               </td>
                               <td className="border p-2 text-xs max-w-[150px] truncate" title={delivery.observation}>
                                 {delivery.observation || '-'}
@@ -1066,6 +1104,8 @@ function App() {
                           <th className="border p-2 text-left">Pagamento 2</th>
                           <th className="border p-2 text-left">Valor Recebido</th>
                           <th className="border p-2 text-left">Troco</th>
+                          <th className="border p-2 text-left">Vl. Receb. 2</th>
+                          <th className="border p-2 text-left">Troco 2</th>
                           <th className="border p-2 text-left">Observação</th>
                           <th className="border p-2 text-left">Entregador</th>
                           <th className="border p-2 text-left">Cadastro</th>
@@ -1104,6 +1144,12 @@ function App() {
                               </td>
                               <td className="border p-2">
                                 {delivery.troco ? `R$ ${delivery.troco.toFixed(2)}` : '-'}
+                              </td>
+                              <td className="border p-2">
+                                {delivery.valorRecebido2 ? `R$ ${delivery.valorRecebido2.toFixed(2)}` : '-'}
+                              </td>
+                              <td className="border p-2">
+                                {delivery.troco2 ? `R$ ${delivery.troco2.toFixed(2)}` : '-'}
                               </td>
                               <td className="border p-2 text-xs max-w-[150px] truncate" title={delivery.observation}>
                                 {delivery.observation || '-'}
@@ -1190,6 +1236,11 @@ function App() {
                             : delivery.paymentMethod === "vem_retirar" ? "Pagar ao Retirar"
                             : `R$ ${delivery.amount.toFixed(2)}`;
                           
+                          const valorAReceber2 = delivery.paymentMethod2 === "dinheiro" && delivery.valorRecebido2
+                            ? `R$ ${delivery.valorRecebido2.toFixed(2)} (Troco: R$ ${delivery.troco2?.toFixed(2)})`
+                            : delivery.paymentMethod2 ? `R$ ${(delivery.amount2 || 0).toFixed(2)}`
+                            : '-';
+                          
                           return (
                             <tr key={delivery.id} className="hover:bg-gray-50" data-testid={`summary-row-${delivery.id}`}>
                               <td className="border p-2">
@@ -1208,7 +1259,12 @@ function App() {
                                   </>
                                 )}
                               </td>
-                              <td className="border p-2">{valorAReceber}</td>
+                              <td className="border p-2">
+                                <div>{valorAReceber}</div>
+                                {delivery.paymentMethod2 && (
+                                  <div className="text-xs text-gray-500 mt-1">Pag.2: {valorAReceber2}</div>
+                                )}
+                              </td>
                               <td className="border p-2">{deliverer ? <span className={`font-bold px-2 py-0.5 rounded ${getDelivererColor(delivery.delivererId)?.bg || ''} ${getDelivererColor(delivery.delivererId)?.text || ''}`}>{deliverer.name}</span> : "-"}</td>
                               <td className="border p-2">
                                 {delivery.cancelado ? (
@@ -2474,6 +2530,23 @@ function App() {
                       value={editForm.valorRecebido}
                       onChange={(e) => setEditForm({...editForm, valorRecebido: e.target.value})}
                     />
+                  </div>
+                )}
+                {editForm.paymentMethod2 === "dinheiro" && (
+                  <div>
+                    <Label>Valor Recebido 2 (R$)</Label>
+                    <Input
+                      data-testid="edit-valor-recebido-2"
+                      type="number"
+                      step="0.01"
+                      value={editForm.valorRecebido2}
+                      onChange={(e) => setEditForm({...editForm, valorRecebido2: e.target.value})}
+                    />
+                    {editForm.valorRecebido2 && editForm.amount2 && parseFloat(editForm.valorRecebido2) > parseFloat(editForm.amount2) && (
+                      <p className="text-sm text-green-600 mt-1 font-bold">
+                        Troco 2: R$ {(parseFloat(editForm.valorRecebido2) - parseFloat(editForm.amount2)).toFixed(2)}
+                      </p>
+                    )}
                   </div>
                 )}
                 <div>

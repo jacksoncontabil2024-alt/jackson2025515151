@@ -66,6 +66,8 @@ class Delivery(BaseModel):
     amount2: Optional[float] = None
     valorRecebido: Optional[float] = None
     troco: Optional[float] = None
+    valorRecebido2: Optional[float] = None
+    troco2: Optional[float] = None
     observation: Optional[str] = None
     datetime: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     saiuParaEntrega: bool = False
@@ -89,6 +91,7 @@ class DeliveryCreate(BaseModel):
     paymentMethod2: Optional[str] = None
     amount2: Optional[float] = None
     valorRecebido: Optional[float] = None
+    valorRecebido2: Optional[float] = None
     observation: Optional[str] = None
 
 class DeliveryUpdate(BaseModel):
@@ -99,6 +102,8 @@ class DeliveryUpdate(BaseModel):
     amount2: Optional[float] = None
     valorRecebido: Optional[float] = None
     troco: Optional[float] = None
+    valorRecebido2: Optional[float] = None
+    troco2: Optional[float] = None
     observation: Optional[str] = None
     saiuParaEntrega: Optional[bool] = None
     horaSaida: Optional[str] = None
@@ -203,9 +208,15 @@ async def create_delivery(input: DeliveryCreate):
     if input.paymentMethod == "dinheiro" and input.valorRecebido:
         troco = input.valorRecebido - input.amount
     
+    # Calculate troco2 if payment method 2 is dinheiro
+    troco2 = None
+    if input.paymentMethod2 == "dinheiro" and input.valorRecebido2:
+        troco2 = input.valorRecebido2 - (input.amount2 or 0)
+    
     delivery_data = input.model_dump()
     delivery_data["seq"] = next_seq
     delivery_data["troco"] = troco
+    delivery_data["troco2"] = troco2
     
     delivery = Delivery(**delivery_data)
     doc = delivery.model_dump()
@@ -342,7 +353,7 @@ async def export_excel():
     # Deliveries sheet
     ws_deliveries = wb.active
     ws_deliveries.title = "Entregas"
-    ws_deliveries.append(["#", "Cliente", "Valor", "Pagamento 1", "Pagamento 2", "Valor 2", "Valor Recebido", "Troco", "Observação", "Status", "Entregador", "Cadastro", "Saiu", "Entregue"])
+    ws_deliveries.append(["#", "Cliente", "Valor", "Pagamento 1", "Pagamento 2", "Valor 2", "Valor Recebido", "Troco", "Valor Recebido 2", "Troco 2", "Observação", "Status", "Entregador", "Cadastro", "Saiu", "Entregue"])
     
     deliverers_dict = {d["id"]: d["name"] for d in deliverers}
     
@@ -359,6 +370,8 @@ async def export_excel():
             delivery.get("amount2", 0) if delivery.get("amount2") else "-",
             delivery.get("valorRecebido", 0) if delivery.get("valorRecebido") else "-",
             delivery.get("troco", 0) if delivery.get("troco") else "-",
+            delivery.get("valorRecebido2", 0) if delivery.get("valorRecebido2") else "-",
+            delivery.get("troco2", 0) if delivery.get("troco2") else "-",
             delivery.get("observation", "-"),
             status,
             deliverer_name,
