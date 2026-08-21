@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import "@/App.css";
 import axios from "axios";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -106,6 +106,105 @@ function App() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // ==================== WEBSOCKET - TEMPO REAL ====================
+  const wsRef = useRef(null);
+  const reconnectTimerRef = useRef(null);
+  const isConnectingRef = useRef(false);
+
+  const EVENT_LABELS = {
+    delivery_created: "Nova entrega registrada",
+    delivery_updated: "Entrega atualizada",
+    delivery_finished: "Entrega finalizada",
+    delivery_cancelled: "Entrega cancelada",
+    delivery_uncancelled: "Entrega reativada",
+    delivery_status_changed: "Status da entrega alterado",
+    delivery_assigned: "Entregador atribuído",
+    delivery_deleted: "Entrega removida",
+    cash_created: "Nova movimentação de caixa",
+    cash_deleted: "Movimentação de caixa removida",
+    stock_created: "Novo item no estoque",
+    stock_updated: "Estoque atualizado",
+    stock_deleted: "Item removido do estoque",
+    deliverer_created: "Novo entregador cadastrado",
+    deliverer_deleted: "Entregador removido",
+    data_cleared: "Dados limpos",
+  };
+
+  const connectWebSocket = useCallback(() => {
+    if (isConnectingRef.current) return;
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return;
+    
+    isConnectingRef.current = true;
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProtocol}//${window.location.host}/api/ws`;
+    
+    try {
+      const ws = new WebSocket(wsUrl);
+      
+      ws.onopen = () => {
+        console.log("WebSocket conectado");
+        isConnectingRef.current = false;
+        if (reconnectTimerRef.current) {
+          clearInterval(reconnectTimerRef.current);
+          reconnectTimerRef.current = null;
+        }
+      };
+      
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          const label = EVENT_LABELS[data.event];
+          if (label) {
+            toast.info(label, { duration: 3000 });
+          }
+          loadData();
+        } catch (e) {
+          console.error("WS parse error:", e);
+        }
+      };
+      
+      ws.onclose = () => {
+        console.log("WebSocket desconectado");
+        isConnectingRef.current = false;
+        wsRef.current = null;
+        if (!reconnectTimerRef.current) {
+          reconnectTimerRef.current = setInterval(() => {
+            connectWebSocket();
+          }, 3000);
+        }
+      };
+      
+      ws.onerror = () => {
+        isConnectingRef.current = false;
+        ws.close();
+      };
+      
+      wsRef.current = ws;
+    } catch (e) {
+      isConnectingRef.current = false;
+    }
+  }, []);
+
+  useEffect(() => {
+    connectWebSocket();
+    
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+          connectWebSocket();
+        }
+        loadData();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      if (reconnectTimerRef.current) clearInterval(reconnectTimerRef.current);
+      if (wsRef.current) wsRef.current.close();
+    };
+  }, [connectWebSocket]);
 
   // Calculate statistics
   const stats = {

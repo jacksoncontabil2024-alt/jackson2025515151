@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -12,6 +12,7 @@ import uuid
 from datetime import datetime, timezone
 import io
 import zipfile
+import json
 from openpyxl import Workbook
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.lib import colors
@@ -31,8 +32,60 @@ db = client[os.environ['DB_NAME']]
 # Create the main app without a prefix
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
+
+
+# ==================== WEBSOCKET MANAGER ====================
+
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: list[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+
+    async def broadcast(self, event_type: str, resource: str, resource_id: str = None):
+        message = json.dumps({
+            "event": event_type,
+            "resource": resource,
+            "id": resource_id,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
+        disconnected = []
+        for connection in self.active_connections:
+            try:
+                await connection.send_text(message)
+            except Exception:
+                disconnected.append(connection)
+        for conn in disconnected:
+            self.disconnect(conn)
+
+ws_manager = ConnectionManager()
+
+@app.websocket("/api/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await ws_manager.connect(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket)
+    except Exception:
+        ws_manager.disconnect(websocket)
 
 
 # ==================== MODELS ====================
@@ -180,6 +233,7 @@ async def create_cash_entry(input: CashEntryCreate):
     entry = CashEntry(**input.model_dump())
     doc = entry.model_dump()
     await db.cash_entries.insert_one(doc)
+    await ws_manager.broadcast("cash_created", "cash", entry.id)
     return entry
 
 @api_router.get("/cash", response_model=List[CashEntry])
@@ -192,6 +246,7 @@ async def delete_cash_entry(entry_id: str):
     result = await db.cash_entries.delete_one({"id": entry_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Entry not found")
+    await ws_manager.broadcast("cash_deleted", "cash", entry_id)
     return {"message": "Entry deleted"}
 
 
@@ -230,6 +285,7 @@ async def create_delivery(input: DeliveryCreate):
             upsert=True
         )
     
+    await ws_manager.broadcast("delivery_created", "delivery", delivery.id)
     return delivery
 
 @api_router.get("/deliveries", response_model=List[Delivery])
@@ -274,6 +330,17 @@ async def update_delivery(delivery_id: str, updates: DeliveryUpdate):
         raise HTTPException(status_code=404, detail="Delivery not found")
     
     updated = await db.deliveries.find_one({"id": delivery_id}, {"_id": 0})
+    # Detect event type
+    event_type = "delivery_updated"
+    if "foiEntregue" in update_data and update_data.get("foiEntregue"):
+        event_type = "delivery_finished"
+    elif "cancelado" in update_data:
+        event_type = "delivery_cancelled" if update_data.get("cancelado") else "delivery_uncancelled"
+    elif "saiuParaEntrega" in update_data:
+        event_type = "delivery_status_changed"
+    elif "delivererId" in update_data:
+        event_type = "delivery_assigned"
+    await ws_manager.broadcast(event_type, "delivery", delivery_id)
     return updated
 
 @api_router.delete("/deliveries/{delivery_id}")
@@ -281,6 +348,7 @@ async def delete_delivery(delivery_id: str):
     result = await db.deliveries.delete_one({"id": delivery_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Delivery not found")
+    await ws_manager.broadcast("delivery_deleted", "delivery", delivery_id)
     return {"message": "Delivery deleted"}
 
 
@@ -291,6 +359,7 @@ async def create_deliverer(input: DelivererCreate):
     deliverer = Deliverer(**input.model_dump())
     doc = deliverer.model_dump()
     await db.deliverers.insert_one(doc)
+    await ws_manager.broadcast("deliverer_created", "deliverer", deliverer.id)
     return deliverer
 
 @api_router.get("/deliverers", response_model=List[Deliverer])
@@ -303,6 +372,7 @@ async def delete_deliverer(deliverer_id: str):
     result = await db.deliverers.delete_one({"id": deliverer_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Deliverer not found")
+    await ws_manager.broadcast("deliverer_deleted", "deliverer", deliverer_id)
     return {"message": "Deliverer deleted"}
 
 
@@ -313,6 +383,7 @@ async def create_employee_payment(input: EmployeePaymentCreate):
     payment = EmployeePayment(**input.model_dump())
     doc = payment.model_dump()
     await db.employee_payments.insert_one(doc)
+    await ws_manager.broadcast("employee_payment_created", "employee_payment", payment.id)
     return payment
 
 @api_router.get("/employee-payments", response_model=List[EmployeePayment])
@@ -325,6 +396,7 @@ async def delete_employee_payment(payment_id: str):
     result = await db.employee_payments.delete_one({"id": payment_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Payment not found")
+    await ws_manager.broadcast("employee_payment_deleted", "employee_payment", payment_id)
     return {"message": "Payment deleted"}
 
 
@@ -618,6 +690,7 @@ async def create_stock_item(input: StockItemCreate):
     item = StockItem(**input.model_dump())
     doc = item.model_dump()
     await db.stock_items.insert_one(doc)
+    await ws_manager.broadcast("stock_created", "stock", item.id)
     return item
 
 @api_router.get("/stock", response_model=List[StockItem])
@@ -634,6 +707,7 @@ async def update_stock_item(item_id: str, update: StockItemUpdate):
     updated = await db.stock_items.find_one({"id": item_id}, {"_id": 0})
     if not updated:
         raise HTTPException(status_code=404, detail="Item not found")
+    await ws_manager.broadcast("stock_updated", "stock", item_id)
     return updated
 
 @api_router.delete("/stock/{item_id}")
@@ -641,6 +715,7 @@ async def delete_stock_item(item_id: str):
     result = await db.stock_items.delete_one({"id": item_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Item not found")
+    await ws_manager.broadcast("stock_deleted", "stock", item_id)
     return {"message": "Item deleted"}
 
 
@@ -993,6 +1068,7 @@ async def clear_all_data():
     await db.deliverers.delete_many({})
     await db.employee_payments.delete_many({})
     await db.clients_pool.delete_many({})
+    await ws_manager.broadcast("data_cleared", "all")
     return {"message": "All data cleared successfully"}
 
 
@@ -1005,14 +1081,6 @@ async def root():
 
 # Include the router in the main app
 app.include_router(api_router)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # Configure logging
 logging.basicConfig(
