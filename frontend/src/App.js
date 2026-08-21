@@ -128,6 +128,8 @@ function App() {
     stock_deleted: "Item removido do estoque",
     deliverer_created: "Novo entregador cadastrado",
     deliverer_deleted: "Entregador removido",
+    employee_payment_created: "Pagamento de funcionário registrado",
+    employee_payment_deleted: "Pagamento de funcionário removido",
     data_cleared: "Dados limpos",
   };
 

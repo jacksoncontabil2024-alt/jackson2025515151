@@ -309,6 +309,7 @@ async def update_delivery(delivery_id: str, updates: DeliveryUpdate):
         update_data["horaSaida"] = None
     
     # Recalculate troco if payment method changes to dinheiro
+    current = None
     if "paymentMethod" in update_data or "valorRecebido" in update_data or "amount" in update_data:
         current = await db.deliveries.find_one({"id": delivery_id}, {"_id": 0})
         if current:
@@ -320,6 +321,20 @@ async def update_delivery(delivery_id: str, updates: DeliveryUpdate):
                 update_data["troco"] = valor_recebido - amount
             else:
                 update_data["troco"] = None
+    
+    # Recalculate troco2 if payment method 2 changes to dinheiro
+    if "paymentMethod2" in update_data or "valorRecebido2" in update_data or "amount2" in update_data:
+        if not current:
+            current = await db.deliveries.find_one({"id": delivery_id}, {"_id": 0})
+        if current:
+            payment_method2 = update_data.get("paymentMethod2", current.get("paymentMethod2"))
+            valor_recebido2 = update_data.get("valorRecebido2", current.get("valorRecebido2"))
+            amount2 = update_data.get("amount2", current.get("amount2"))
+            
+            if payment_method2 == "dinheiro" and valor_recebido2 and amount2:
+                update_data["troco2"] = valor_recebido2 - amount2
+            else:
+                update_data["troco2"] = None
     
     result = await db.deliveries.update_one(
         {"id": delivery_id},
@@ -1068,6 +1083,7 @@ async def clear_all_data():
     await db.deliverers.delete_many({})
     await db.employee_payments.delete_many({})
     await db.clients_pool.delete_many({})
+    await db.stock_items.delete_many({})
     await ws_manager.broadcast("data_cleared", "all")
     return {"message": "All data cleared successfully"}
 

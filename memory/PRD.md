@@ -22,8 +22,11 @@ Sistema de gerenciamento de entregas para o negócio "Cupim na Telha".
 - Backup por data e completo (com proteção antes de limpar)
 - Modal edição com 2a forma de pagamento + troco2
 - **WebSocket tempo real**: sincronização automática entre dispositivos sem F5
-- Reconexão automática a cada 3s + sync ao voltar à aba
-- Toasts discretos por tipo de evento
+  - 100% cobertura: todos os 13 endpoints POST/PATCH/DELETE com broadcast
+  - 18 tipos de eventos com notificações toast
+  - Reconexão automática a cada 3s + sync ao voltar à aba
+- Limpar Tudo agora inclui estoque (stock_items)
+- Backend recalcula troco2 automaticamente no PATCH
 
 ## Endpoints da API
 - `/api/ws` - WebSocket (tempo real)
@@ -39,4 +42,4 @@ Sistema de gerenciamento de entregas para o negócio "Cupim na Telha".
 - `/api/data/clear` - DELETE
 
 ## Backlog
-- Refatoração: quebrar App.js e server.py em módulos menores
+- Refatoração: quebrar App.js (~2680 linhas) e server.py (~1100 linhas) em módulos menores
