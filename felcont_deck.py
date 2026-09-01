@@ -10,20 +10,21 @@ from pptx.chart.data import CategoryChartData
 from pptx.oxml.ns import qn
 
 # ------------------------------------------------------------------ paleta
-BLUE      = RGBColor(0x00, 0xA3, 0xE0)   # azul primario FELCONT
-BLUE_DK   = RGBColor(0x00, 0x6E, 0x9B)
-NAVY      = RGBColor(0x0A, 0x22, 0x33)   # fundo escuro capa
-NAVY2     = RGBColor(0x0F, 0x30, 0x44)
-ORANGE    = RGBColor(0xF2, 0x7E, 0x1F)
-GREEN     = RGBColor(0x2E, 0xA8, 0x4F)
-RED       = RGBColor(0xD1, 0x3B, 0x3B)
+BLUE      = RGBColor(0x04, 0xB7, 0xAF)   # turquesa primario FELCONT
+BLUE_DK   = RGBColor(0x06, 0x8B, 0x84)
+NAVY      = RGBColor(0x32, 0x2F, 0x6A)   # indigo da marca (fundo escuro)
+NAVY2     = RGBColor(0x3E, 0x3A, 0x82)
+ORANGE    = RGBColor(0xE8, 0xA1, 0x3A)   # ambar (reducoes / atencao)
+GREEN     = RGBColor(0x57, 0xB1, 0x4A)
+RED       = RGBColor(0xD6, 0x45, 0x3F)
 RED_BG    = RGBColor(0xFB, 0xEC, 0xEC)
-GRAY_TX   = RGBColor(0x2B, 0x31, 0x38)
-GRAY      = RGBColor(0x6B, 0x74, 0x7E)
-GRAY_LT   = RGBColor(0xF1, 0xF5, 0xF8)
-GRAY_BD   = RGBColor(0xDD, 0xE4, 0xEA)
+GRAY_TX   = RGBColor(0x26, 0x24, 0x45)
+GRAY      = RGBColor(0x6B, 0x6E, 0x86)
+GRAY_LT   = RGBColor(0xF2, 0xF3, 0xF8)
+GRAY_BD   = RGBColor(0xDE, 0xE0, 0xEC)
 WHITE     = RGBColor(0xFF, 0xFF, 0xFF)
-AMBER_BG  = RGBColor(0xFF, 0xF6, 0xE9)
+AMBER_BG  = RGBColor(0xFF, 0xF6, 0xE6)
+LOGO_PNG  = "/app/assets_in/a2.png"
 
 TITLE_FONT = "Roboto"
 BODY_FONT  = "Open Sans"
@@ -135,7 +136,7 @@ for i in range(4):
 for (px, py) in pts:
     d = rect(s, px-0.06, py-0.06, 0.12, 0.12, fill=WHITE, shape=MSO_SHAPE.OVAL)
 
-logo(s, 0.75, 0.7, dark=True)
+s.shapes.add_picture(LOGO_PNG, Inches(0.7), Inches(0.6), width=Inches(3.0))
 txt(s, 0.75, 2.55, 8.0, 0.5, [[("ANÁLISE GERENCIAL", 16, BLUE, True, BODY_FONT)]])
 txt(s, 0.75, 3.05, 8.0, 1.7, [
     [("Demonstração do", 40, WHITE, True, TITLE_FONT)],
@@ -443,7 +444,7 @@ txt(s, 0.62, 6.75, 12.09, 0.5, [[("Mensagem-chave:  ", 12, RGBColor(0xCF,0xEF,0x
 # ================================================================== SLIDE 9
 s = slide(NAVY)
 rect(s, 0, 0, SW, 0.14, fill=BLUE)
-logo(s, 0.75, 0.65, dark=True)
+s.shapes.add_picture(LOGO_PNG, Inches(0.7), Inches(0.55), width=Inches(2.9))
 txt(s, 0.75, 1.9, 11.0, 0.5, [[("CONCLUSÃO / PRÓXIMOS PASSOS", 14, BLUE, True, BODY_FONT)]])
 txt(s, 0.75, 2.35, 11.5, 0.8, [[("Do diagnóstico à decisão", 34, WHITE, True, TITLE_FONT)]])
 # fluxo 4 etapas

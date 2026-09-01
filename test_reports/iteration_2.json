@@ -1,0 +1,37 @@
+{
+  "summary": "Frontend E2E testing for FELCONT REPORTS AI. Covered Dashboard, Nova Análise wizard, Clientes list+detail, Análise (all 6 tabs including editor/geração), Configurações and Regressão do deck /apresentacao-dre. All flows passed with zero blocking console errors and PPTX/PDF were generated successfully.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Dashboard", "issues": ["Stat cards mostram '—' brevemente até o /dashboard retornar; considerar skeleton loading para UX mais polido"]},
+      {"screen": "Analise > Editor", "issues": ["Botão 'Salvar' não mostra toast de sucesso após salvar (apenas troca temporária do label). Feedback visual poderia ser mais evidente"]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_felcont_reports.py", "/app/test_reports/pytest/felcont_reports.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Analise.jsx tem 373 linhas com múltiplos sub-componentes (Validacao/Painel/DRE/Balanco/Diagnostico/Editor). Está no limite; considerar quebrar em arquivos separados quando for adicionar novos features.",
+    "Editor: o key do slide usa `sl.id + i`; ao reordenar (mesmo id, novo índice) as chaves mudam, o que pode causar remount desnecessário dos inputs (perda de foco em edições rápidas). Recomenda-se usar apenas `sl.id`.",
+    "Configuracoes.save() não trata erro de localStorage (quota etc.) mas é aceitável no MVP."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (not retested)", "frontend": "100%"},
+  "seed_data_creation": "Não criado. Usei análise pré-existente id=94dd99d3-2200-4734-b5f5-6138c1eede9f e clientes já cadastrados.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Todos os fluxos de UI (Dashboard, Nova Análise wizard incluindo validação de campos, Clientes lista/detalhe, Análise com 6 abas: validacao/painel/dre/balanco/diagnostico/editor, editor com edit/toggle/reorder/save/generate produzindo dl-pptx e dl-pdf, Configurações e Regressão do deck em /apresentacao-dre com lightbox) passaram. DRE tab mostra empty message ('Nenhuma DRE identificada'), o que é comportamento correto para essa análise. Diagnóstico já foi executado (painel-diagnostico é exibido). Geração de PPTX+PDF via btn-generate levou ~alguns segundos e produziu URLs válidas contendo /api/reports/analyses/.../download/pptx e .../download/pdf.",
+  "test_details_pass": [
+    "dashboard sem 'Building something incredible'",
+    "sidebar completa e nav items funcionais",
+    "stat cards com valores (2 clientes, 2 análises)",
+    "wizard NovaAnalise: validação de required, avanço para upload, botão Voltar",
+    "clientes list -> detalhe funcionam",
+    "6 tabs alternam conteúdo corretamente",
+    "kpi-disponibilidade + origin-disponibilidade abre caixa 'Como foi calculado'",
+    "Editor: edit título, toggle visibilidade, reorder, save, generate -> download-box com dl-pptx e dl-pdf",
+    "Configurações: swatches, salvar sem crash",
+    "Deck /apresentacao-dre: 9 slide-thumbs, download-pptx-btn, lightbox abre/fecha, back-to-reports"
+  ]
+}
