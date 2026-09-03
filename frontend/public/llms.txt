@@ -1,0 +1,15 @@
+# CPC 51 | IFRS 18 — Apresentação Felcont
+
+Apresentação web navegável (React) sobre o CPC 51 / NBC TG 51 / Resolução CVM 237 (IFRS 18), com notas do apresentador, modo apresentador em tela separada e exportação em PDF.
+
+## O que a página oferece
+- Deck de 20 slides em português (Brasil) sobre a nova estrutura da DRE em 5 categorias, subtotais obrigatórios, MPMs/MPDAs, agregação/desagregação, impactos na DFC, cenário regulatório brasileiro e vigência (preparação 2026, adoção 2027).
+- Exemplo de DRE fictícia com badges de categoria, tabela de mapeamento de plano de contas (de-para) e modelo de chamado pronto para o suporte Questor.
+- Plano de ação Felcont 2026 em 10 passos e matriz de riscos.
+- Rotas: `/` (deck), `/apresentador` (console com notas e cronômetro), `/imprimir` (exportação PDF em paisagem).
+
+## Público
+Equipe interna Felcont (contadores, auditores, analistas) e clientes do escritório.
+
+## Aviso
+Valores monetários são fictícios e didáticos. Pontos dependentes de fornecedor trazem o selo "Confirmar na fonte / com o fornecedor".

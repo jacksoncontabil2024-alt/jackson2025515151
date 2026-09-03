@@ -1,0 +1,330 @@
+{
+  "project_info": {
+    "title": "Apresentação Web CPC 51 | IFRS 18 - Felcont Consultoria Contábil",
+    "description": "Slide deck de nível consulting/Awwwards com notas de apresentador sincronizadas e modo de impressão/exportação em PDF",
+    "target_audience": "Equipe interna Felcont (contadores, auditores, analistas) e clientes de contabilidade",
+    "app_type": "presentation_slide_deck",
+    "framework": "React (JavaScript / JSX) + Tailwind CSS + Framer Motion + Lucide React"
+  },
+  "colors": {
+    "theme": "Dark Navy & Electric Cyan (Estilo Consultoria Executive)",
+    "background": {
+      "main": "#070A12",
+      "surface": "#0E1424",
+      "elevated": "#162036",
+      "card": "#111827",
+      "glass": "rgba(14, 20, 36, 0.75)"
+    },
+    "border": {
+      "subtle": "rgba(255, 255, 255, 0.08)",
+      "medium": "rgba(0, 229, 255, 0.2)",
+      "highlight": "#00E5FF"
+    },
+    "accent": {
+      "primary_cyan": "#00E5FF",
+      "secondary_cyan": "#00B8D4",
+      "glow_cyan": "rgba(0, 229, 255, 0.15)",
+      "electric_blue": "#38BDF8"
+    },
+    "text": {
+      "primary": "#F8FAFC",
+      "secondary": "#94A3B8",
+      "muted": "#64748B",
+      "highlight": "#00E5FF"
+    },
+    "dre_5_categories": {
+      "operacional": {
+        "name": "Operacional",
+        "hex": "#00E5FF",
+        "bg_glow": "rgba(0, 229, 255, 0.12)",
+        "badge_border": "#00E5FF",
+        "description": "Resíduo principal de operações do negócio"
+      },
+      "investimento": {
+        "name": "Investimento",
+        "hex": "#10B981",
+        "bg_glow": "rgba(16, 185, 129, 0.12)",
+        "badge_border": "#10B981",
+        "description": "Retornos independentes da operação principal"
+      },
+      "financiamento": {
+        "name": "Financiamento",
+        "hex": "#8B5CF6",
+        "bg_glow": "rgba(139, 92, 246, 0.12)",
+        "badge_border": "#8B5CF6",
+        "description": "Fontes de capital e dívidas bancárias/IFRS 16"
+      },
+      "impostos": {
+        "name": "Impostos sobre a Renda",
+        "hex": "#F59E0B",
+        "bg_glow": "rgba(245, 158, 11, 0.12)",
+        "badge_border": "#F59E0B",
+        "description": "IRPJ e CSLL correntes e diferidos (CPC 32)"
+      },
+      "descontinuadas": {
+        "name": "Operações Descontinuadas",
+        "hex": "#F43F5E",
+        "bg_glow": "rgba(244, 63, 94, 0.12)",
+        "badge_border": "#F43F5E",
+        "description": "Resultados de componentes descontinuados (CPC 31)"
+      }
+    },
+    "status_badges": {
+      "ficticio": {
+        "label": "Exemplo Didático / Fictício",
+        "bg": "rgba(59, 130, 246, 0.15)",
+        "border": "rgba(59, 130, 246, 0.4)",
+        "text": "#60A5FA"
+      },
+      "confirmar_fonte": {
+        "label": "Confirmar na fonte / com o fornecedor (Questor)",
+        "bg": "rgba(245, 158, 11, 0.15)",
+        "border": "rgba(245, 158, 11, 0.4)",
+        "text": "#FBBF24"
+      }
+    }
+  },
+  "typography": {
+    "font_families": {
+      "headings": "Plus Jakarta Sans, sans-serif",
+      "body": "Outfit, sans-serif",
+      "numbers_financial": "JetBrains Mono, monospace"
+    },
+    "scale": {
+      "h1_hero": "text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight",
+      "h2_slide_title": "text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight",
+      "h3_section": "text-lg md:text-xl lg:text-2xl font-semibold",
+      "body": "text-sm md:text-base leading-relaxed",
+      "mono_data": "text-sm md:text-base font-mono tracking-wide"
+    }
+  },
+  "layout_and_slide_deck_structure": {
+    "aspect_ratio": "16:9",
+    "container_classes": "w-full max-w-[1400px] aspect-[16/9] mx-auto bg-[#070A12] text-[#F8FAFC] relative overflow-hidden rounded-xl border border-white/10 shadow-2xl",
+    "navigation_controls": {
+      "keyboard_triggers": ["ArrowRight", "ArrowDown", "Space", "PageDown", "ArrowLeft", "ArrowUp", "PageUp"],
+      "shortcuts": {
+        "presenter_mode": "KeyP",
+        "grid_overview": "KeyO",
+        "fullscreen": "KeyF",
+        "print_pdf": "KeyM"
+      },
+      "floating_dock": "Fixado no rodapé com botões de Próximo/Anterior, Indicador de Slide, Botão Apresentador, Botão Visão Geral em Grade e Botão Imprimir"
+    },
+    "progress_bar": "Linha fina no topo da tela com gradient cyan (#00E5FF -> #38BDF8) e largura proporcional (currentSlide / totalSlides * 100%)"
+  },
+  "presentation_modes": {
+    "main_deck": {
+      "route": "/",
+      "description": "Apresentação em tela cheia 16:9 com animações Framer Motion, parallax sutil e controle por teclado"
+    },
+    "presenter_console": {
+      "route": "/apresentador",
+      "description": "Painel de tela dupla para o palestrante com miniatura do slide atual, prévia do próximo slide, notas de fala do apresentador, cronômetro regressivo/progressivo e sincronização via BroadcastChannel/localStorage"
+    },
+    "print_pdf_view": {
+      "route": "/imprimir",
+      "description": "Visão otimizada para impressão em PDF onde todos os 20 slides são renderizados em sequência com page-break-after: always para gerar PDF de alta qualidade"
+    }
+  },
+  "slide_content_plan_20_slides": [
+    {
+      "index": 1,
+      "id": "capa",
+      "title": "CPC 51 / IFRS 18: A Nova Era da Demonstração do Resultado",
+      "subtitle": "Diretrizes e Impactos Práticos para a Felcont e seus Clientes",
+      "type": "hero_cover"
+    },
+    {
+      "index": 2,
+      "id": "contexto-iasb",
+      "title": "Por que o IASB criou a IFRS 18 / CPC 51?",
+      "subtitle": "Fim da inconsistência na apresentação do desempenho operacional",
+      "type": "split_card"
+    },
+    {
+      "index": 3,
+      "id": "visao-geral-mudancas",
+      "title": "O que Muda no Resultado?",
+      "subtitle": "Estruturação rigorosa, MPMs e transparência em notas explicativas",
+      "type": "marquee_hero"
+    },
+    {
+      "index": 4,
+      "id": "estrutura-5-categorias",
+      "title": "A Nova Estrutura da DRE: 5 Categorias",
+      "subtitle": "Classificação obrigatória das receitas e despesas",
+      "type": "grid_bento_5_cards"
+    },
+    {
+      "index": 5,
+      "id": "cat-operacional",
+      "title": "1. Categoria Operacional",
+      "subtitle": "A categoria residual das atividades principais",
+      "type": "deep_dive"
+    },
+    {
+      "index": 6,
+      "id": "cat-investimento",
+      "title": "2. Categoria de Investimento",
+      "subtitle": "Retornos gerados independentemente da operação",
+      "type": "deep_dive"
+    },
+    {
+      "index": 7,
+      "id": "cat-financiamento",
+      "title": "3. Categoria de Financiamento",
+      "subtitle": "Gestão de capital, passivos e juros IFRS 16",
+      "type": "deep_dive"
+    },
+    {
+      "index": 8,
+      "id": "subtotais-obrigatorios",
+      "title": "Novos Subtotais Obrigatórios na DRE",
+      "subtitle": "Lucro Operacional e Lucro Antes de Financiamento e Impostos",
+      "type": "comparison_subtotals"
+    },
+    {
+      "index": 9,
+      "id": "exemplo-dre-ficticia",
+      "title": "Demonstração Prática: DRE Antiga vs Nova CPC 51",
+      "subtitle": "Valores didáticos com badges de categoria e tipografia numérica mono",
+      "type": "financial_table"
+    },
+    {
+      "index": 10,
+      "id": "mpms",
+      "title": "MPMs: Medidas de Desempenho Definidas pela Administração",
+      "subtitle": "Regras de conciliação obrigatória em Nota Explicativa",
+      "type": "auditing_focus"
+    },
+    {
+      "index": 11,
+      "id": "agregacao-desagregacao",
+      "title": "Princípios de Agregação e Desagregação",
+      "subtitle": "Proibição do uso genérico de 'Outras Despesas'",
+      "type": "rules_cards"
+    },
+    {
+      "index": 12,
+      "id": "natureza-vs-funcao",
+      "title": "Apresentação por Natureza vs Função",
+      "subtitle": "Critérios de escolha e mapa de conciliação",
+      "type": "comparison"
+    },
+    {
+      "index": 13,
+      "id": "impactos-dfc",
+      "title": "Impactos na Demonstração dos Fluxos de Caixa (DFC)",
+      "subtitle": "Alinhamento com o Lucro Operacional como ponto de partida",
+      "type": "flow_impact"
+    },
+    {
+      "index": 14,
+      "id": "cenario-brasil",
+      "title": "O Cenário Regulatório no Brasil",
+      "subtitle": "CPC 51, NBC TG 51 e Resolução CVM nº 237",
+      "type": "regulatory_timeline"
+    },
+    {
+      "index": 15,
+      "id": "cronograma-vigencia",
+      "title": "Linha do Tempo e Período Comparativo",
+      "subtitle": "Exemplo 2026 comparativo obriga adequação imediata para 2027",
+      "type": "timeline"
+    },
+    {
+      "index": 16,
+      "id": "desafios-questor",
+      "title": "Adequação no Software Questor",
+      "subtitle": "Revisão de Plano de Contas, Tabelas de De-Para e Mapeamento",
+      "type": "software_integration"
+    },
+    {
+      "index": 17,
+      "id": "suporte-questor-modelos",
+      "title": "Perguntas Frequentes & Modelo de Chamado Questor",
+      "subtitle": "Templates prontos para envio ao suporte do ERP",
+      "type": "ticket_templates"
+    },
+    {
+      "index": 18,
+      "id": "plano-acao-10-passos",
+      "title": "Plano de Ação Felcont em 10 Passos",
+      "subtitle": "Fluxograma interativo para adequação do escritório e clientes",
+      "type": "interactive_flowchart"
+    },
+    {
+      "index": 19,
+      "id": "matriz-riscos",
+      "title": "Matriz de Riscos e Pontos de Atenção",
+      "subtitle": "Auditoria, Controles Internos e Treinamento da Equipe",
+      "type": "risk_matrix"
+    },
+    {
+      "index": 20,
+      "id": "conclusao-felcont",
+      "title": "Conclusão & Próximos Passos Felcont",
+      "subtitle": "Transformando exigência regulatória em diferencial consultivo",
+      "type": "closing_cta"
+    }
+  ],
+  "motion_and_animations": {
+    "title_reveal": {
+      "mask_container": "overflow-hidden inline-block",
+      "animation": {
+        "initial": { "y": "100%", "opacity": 0 },
+        "animate": { "y": "0%", "opacity": 1 },
+        "transition": { "duration": 0.6, "ease": [0.16, 1, 0.3, 1] }
+      }
+    },
+    "slide_entrance": {
+      "initial": { "opacity": 0, "x": 30 },
+      "animate": { "opacity": 1, "x": 0 },
+      "exit": { "opacity": 0, "x": -30 },
+      "transition": { "duration": 0.4, "ease": "easeInOut" }
+    },
+    "stagger_children": {
+      "staggerChildren": 0.08,
+      "delayChildren": 0.15
+    },
+    "hero_cover_parallax": "Grid e orb brilhante no fundo reagem sutilmente ao movimento do cursor do mouse (transform translate)"
+  },
+  "components_and_ui_widgets": {
+    "felcont_logo_lockup": "Logomarca vetorial em SVG da Felcont com escudo geométrica azul cyan, tipografia 'FELCONT' em destaque e sublegenda 'Consultoria Contábil & Auditoria'",
+    "dre_table_component": "Tabela responsiva com agrupamentos por categoria, badges coloridas em cada linha, valores em fonte JetBrains Mono alinhados à direita, totais e subtotais destacados em Cyan #00E5FF",
+    "flowchart_10_steps": "Fluxograma com 10 nós organizados em 2 linhas de 5 passos, com linhas de conexão brilhantes, numeração 01 a 10 e popover/modal com detalhes ao clicar",
+    "marquee_banner": "Banner contínuo lento com frase em destaque: 'CPC 51 / IFRS 18 — A MAIOR REFORMA NAS DEMONSTRAÇÕES FINANCEIRAS DOS ÚLTIMOS 20 ANOS'",
+    "badges": [
+      "Badge 5 Categorias DRE (Operacional, Investimento, Financiamento, Impostos, Descontinuadas)",
+      "Selo 'Exemplo Didático / Fictício' (azul translúcido)",
+      "Selo 'Confirmar na fonte / com o fornecedor Questor' (âmbar warning)"
+    ]
+  },
+  "media_urls": [
+    {
+      "category": "executive_meeting",
+      "url": "https://images.unsplash.com/photo-1628348068343-c6a848d2b6dd?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MDZ8MHwxfHNlYXJjaHwyfHxhY2NvdW50aW5nJTIwY29ycG9yYXRlJTIwZXhlY3V0aXZlJTIwZmluYW5jaWFsJTIwbWVldGluZ3xlbnwwfHx8fDE3ODg0NjUxNjl8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Executivo examinando demonstrativos financeiros em tablet"
+    },
+    {
+      "category": "auditing_team",
+      "url": "https://images.unsplash.com/photo-1551135049-8a33b5883817?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MDZ8MHwxfHNlYXJjaHwzfHxhY2NvdW50aW5nJTIwY29ycG9yYXRlJTIwZXhlY3V0aXZlJTIwZmluYW5jaWFsJTIwbWVldGluZ3xlbnwwfHx8fDE3ODg0NjUxNjl8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Equipe de contabilidade e auditoria analisando documentos na mesa"
+    }
+  ],
+  "instructions_to_main_agent": [
+    "Instalar lucide-react, framer-motion, react-fast-marquee, canvas-confetti se necessário para enriquecer a experiência",
+    "Assegurar que todas as rotas (/, /apresentador, /imprimir) estejam devidamente configuradas no react-router-dom",
+    "Utilizar BroadcastChannel (ou fallback localStorage event) para manter a sincronia perfeita de slides entre o deck principal e a janela do apresentador",
+    "Garantir que a visualização de impressão (/imprimir) tenha estilização CSS @media print com page-break-after: always para gerar um PDF impecável de 20 páginas em orientação paisagem",
+    "Adicionar data-testid em todos os elementos clicáveis e informativos principais (ex: data-testid='next-slide-btn', data-testid='presenter-mode-btn', data-testid='slide-title')"
+  ],
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "Evitar layouts centralizados genéricos; utilizar o grid 16:9 de forma assimétrica e editorial",
+    "Manter contraste rigoroso de acessibilidade (texto branco #F8FAFC em fundo navy profundo #070A12)",
+    "Usar fonte monospace (JetBrains Mono) exclusivamente para códigos contábeis, valores monetários da DRE e percentuais",
+    "Garantir que os selos 'Exemplo Didático / Fictício' e 'Confirmar na fonte' estejam visíveis nos slides apropriados",
+    "Todas as interações interativas devem possuir hover states visíveis e micro-animações"
+  ]
+}
