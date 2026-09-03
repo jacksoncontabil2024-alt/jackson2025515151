@@ -2,6 +2,7 @@ import React, { createContext, useContext } from "react";
 import { motion } from "framer-motion";
 
 export const StaticCtx = createContext(false);
+export const SlideNumCtx = createContext(null);
 
 export const EASE = [0.16, 1, 0.3, 1];
 

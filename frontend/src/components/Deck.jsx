@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Grid3X3, Maximize, Printer, Presentation, X } from "lucide-react";
 import { SLIDES } from "./slides";
 import { TOTAL_SLIDES } from "../data/slidesContent";
-import { StaticCtx } from "./bits";
+import { StaticCtx, SlideNumCtx } from "./bits";
 import { CANVAS_W, CANVAS_H } from "./SlideShell";
 
 export const CHANNEL = "felcont-cpc51-deck";
@@ -35,7 +35,6 @@ export default function Deck() {
     setI((c) => Math.min(TOTAL_SLIDES - 1, Math.max(0, typeof n === "number" ? n : c + n)));
   }, []);
 
-  // BroadcastChannel sync
   useEffect(() => {
     let ch = null;
     try {
@@ -115,7 +114,9 @@ export default function Deck() {
               exit={{ opacity: 0, x: -48, scale: 0.985 }}
               transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
             >
-              <Slide />
+              <SlideNumCtx.Provider value={{ n: i + 1, total: TOTAL_SLIDES }}>
+                <Slide />
+              </SlideNumCtx.Provider>
             </motion.div>
           </AnimatePresence>
         </div>
@@ -146,7 +147,7 @@ export default function Deck() {
             data-testid="overview-grid"
           >
             <div className="mb-8 flex items-center justify-between">
-              <p className="font-mono2 text-xs uppercase tracking-[0.3em] text-[#00E5FF]">Visão geral · 20 slides</p>
+              <p className="font-mono2 text-xs uppercase tracking-[0.3em] text-[#00E5FF]">Visão geral · {TOTAL_SLIDES} slides</p>
               <button data-testid="overview-close-btn" onClick={() => setOverview(false)}
                 className="flex items-center gap-2 rounded-full hairline px-4 py-2 text-xs text-[#94A3B8] transition-colors hover:border-[rgba(0,229,255,0.4)] hover:text-white">
                 <X size={14} /> Fechar (Esc)
@@ -164,7 +165,11 @@ export default function Deck() {
                 >
                   <div className="pointer-events-none aspect-video w-full overflow-hidden bg-[#070A12]">
                     <div style={{ width: CANVAS_W, height: CANVAS_H, transform: "scale(0.238)", transformOrigin: "top left" }}>
-                      <StaticCtx.Provider value={true}><S /></StaticCtx.Provider>
+                      <StaticCtx.Provider value={true}>
+                        <SlideNumCtx.Provider value={{ n: idx + 1, total: TOTAL_SLIDES }}>
+                          <S />
+                        </SlideNumCtx.Provider>
+                      </StaticCtx.Provider>
                     </div>
                   </div>
                   <span className="absolute left-2 top-2 rounded bg-black/60 px-1.5 py-0.5 font-mono2 text-[10px] text-[#00E5FF]">

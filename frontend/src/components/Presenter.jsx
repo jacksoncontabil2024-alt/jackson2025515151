@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, MonitorOff, Pause, Play, RotateCcw } from "lucide-react";
 import { SLIDES } from "./slides";
 import { NOTES, SLIDE_TITLES, TOTAL_SLIDES } from "../data/slidesContent";
-import { StaticCtx } from "./bits";
+import { StaticCtx, SlideNumCtx } from "./bits";
 import { CANVAS_W, CANVAS_H } from "./SlideShell";
 import { CHANNEL } from "./Deck";
 import { LogoLockup } from "./Logo";
@@ -89,7 +89,7 @@ export default function Presenter() {
         <div className="flex min-h-0 flex-col gap-4">
           <div className="relative overflow-hidden rounded-xl border border-[rgba(0,229,255,0.35)]" data-testid="presenter-current">
             <div className="aspect-video w-full overflow-hidden bg-[#070A12]">
-              <ScaledSlide Slide={Current} width={680} />
+              <ScaledSlide Slide={Current} width={680} n={i + 1} />
             </div>
             <span className="absolute left-3 top-3 rounded bg-black/60 px-2 py-0.5 font-mono2 text-[10px] uppercase tracking-[0.2em] text-[#00E5FF]">
               Slide atual · {String(i + 1).padStart(2, "0")}
@@ -99,7 +99,7 @@ export default function Presenter() {
             <div className="relative w-44 shrink-0 overflow-hidden rounded-lg hairline" data-testid="presenter-next">
               {Next ? (
                 <div className="aspect-video w-full overflow-hidden bg-[#070A12] opacity-70">
-                  <ScaledSlide Slide={Next} width={176} />
+                  <ScaledSlide Slide={Next} width={176} n={i + 2} />
                 </div>
               ) : (
                 <div className="flex aspect-video items-center justify-center text-[11px] text-[#64748B]">Fim do deck</div>
@@ -139,11 +139,15 @@ export default function Presenter() {
   );
 }
 
-function ScaledSlide({ Slide, width }) {
+function ScaledSlide({ Slide, width, n }) {
   const s = width / CANVAS_W;
   return (
     <div style={{ width: CANVAS_W, height: CANVAS_H, transform: `scale(${s})`, transformOrigin: "top left" }}>
-      <StaticCtx.Provider value={true}><Slide /></StaticCtx.Provider>
+      <StaticCtx.Provider value={true}>
+        <SlideNumCtx.Provider value={{ n, total: TOTAL_SLIDES }}>
+          <Slide />
+        </SlideNumCtx.Provider>
+      </StaticCtx.Provider>
     </div>
   );
 }

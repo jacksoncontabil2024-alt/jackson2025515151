@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { ArrowRight, Scale, Layers, Globe2, Landmark, AlertTriangle } from "lucide-react";
+import { ArrowRight, Scale, Layers, Globe2, Landmark, AlertTriangle, BookOpen, Repeat, CalendarClock, Ticket } from "lucide-react";
 import { LogoLockup } from "../Logo";
 import { SlideShell } from "../SlideShell";
 import { Reveal, MaskedTitle, Selo, CatBadge, Card, Marquee, Num, StaticCtx, EASE, CATS } from "../bits";
@@ -92,17 +92,75 @@ export function S1() {
       </div>
       <div className="relative z-10">
         <Marquee
-          items={["CPC 51 · IFRS 18", "A maior reforma na apresentação das demonstrações em duas décadas", "Preparação 2026", "Adoção obrigatória 2027", "Comparativos reexpressos", "Felcont Consultoria Contábil"]}
+          items={["CPC 51 · IFRS 18", "A maior reforma na apresentação das demonstrações em duas décadas", "Preparação 2026", "Adoção obrigatória 2027", "Comparativos reexpressos", "Felcont Contabilidade, Finanças e Auditoria"]}
         />
       </div>
     </div>
   );
 }
 
-/* ---------------- 2 · INTRODUÇÃO ---------------- */
+/* ---------------- 2 · PERGUNTAS-CHAVE ---------------- */
+export function S2B() {
+  const qa = [
+    {
+      icon: BookOpen,
+      q: "O que é?",
+      a: <>A <span className="font-semibold text-[#F8FAFC]">IFRS 18</span> é a nova norma global de apresentação das demonstrações (IASB, abr/2024). O <span className="font-semibold text-[#F8FAFC]">CPC 51</span> é a versão brasileira — NBC TG 51 (CFC) e Resolução CVM nº 237 — e substitui o CPC 26 (R1). É norma de <span className="text-[#00E5FF]">apresentação</span>: não muda mensuração nem o lucro.</>,
+      ref: "Detalhes · slide 03",
+      selo: null,
+    },
+    {
+      icon: Repeat,
+      q: "O que muda?",
+      a: <>DRE em <span className="font-semibold text-[#F8FAFC]">5 categorias</span>, dois <span className="font-semibold text-[#F8FAFC]">subtotais obrigatórios</span>, MPMs reconciliadas em nota, fim das “outras despesas” genéricas e DFC reparametrizada. O lucro final não muda — a forma de apresentar, sim.</>,
+      ref: "Slides 04 a 12",
+      selo: null,
+    },
+    {
+      icon: CalendarClock,
+      q: "Quando entra em vigor?",
+      a: <>Exercícios iniciados em ou após <span className="font-semibold text-[#F8FAFC]">01/01/2027</span>, com aplicação retrospectiva: o <span className="font-semibold text-[#F8FAFC]">comparativo de 2026</span> já sai no novo formato. Aplicação antecipada permitida. Preparação: <span className="text-[#00E5FF]">2026</span>.</>,
+      ref: "Linha do tempo · slide 14",
+      selo: null,
+    },
+    {
+      icon: Ticket,
+      q: "Abrir chamado no Questor para o plano de contas?",
+      a: <><span className="font-semibold text-[#00E5FF]">Sim — abra já.</span> Mas não para trocar o plano de contas às cegas: o chamado levanta o roadmap do fornecedor e a parametrização de de-para (conta × categoria), sem quebrar o histórico.</>,
+      ref: "Modelo pronto · slide 18",
+      selo: "confirmar",
+    },
+  ];
+  return (
+    <SlideShell kicker="Resumo executivo" title={["Quatro perguntas, respostas diretas"]}
+      subtitle="As dúvidas que todo cliente e toda equipe fazem — respondidas de antemão.">
+      <div className="grid flex-1 grid-cols-2 grid-rows-2 gap-4 pt-1">
+        {qa.map((item, i) => (
+          <Reveal key={item.q} delay={0.25 + i * 0.11} className="h-full">
+            <div className="flex h-full flex-col rounded-xl hairline bg-[#0E1424]/80 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(0,229,255,0.35)]">
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-[rgba(0,229,255,0.3)] bg-[rgba(0,229,255,0.08)]">
+                  <item.icon size={16} className="text-[#00E5FF]" />
+                </span>
+                <h3 className="font-display text-[16px] font-extrabold text-[#F8FAFC]">{item.q}</h3>
+              </div>
+              <p className="mt-3 flex-1 text-[12.5px] leading-relaxed text-[#94A3B8]">{item.a}</p>
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <span className="font-mono2 text-[10px] uppercase tracking-[0.18em] text-[#64748B]">{item.ref}</span>
+                {item.selo && <Selo tipo={item.selo} />}
+              </div>
+            </div>
+          </Reveal>
+        ))}
+      </div>
+    </SlideShell>
+  );
+}
+
+/* ---------------- 3 · INTRODUÇÃO ---------------- */
 export function S2() {
   return (
-    <SlideShell n={2} total={20} kicker="Introdução" title={["O que é a IFRS 18 — e o que é o CPC 51"]}
+    <SlideShell kicker="Introdução" title={["O que é a IFRS 18 — e o que é o CPC 51"]}
       subtitle="A mesma norma, em dois idiomas regulatórios: global (IASB) e brasileiro (CPC / CFC / CVM).">
       <div className="grid flex-1 grid-cols-3 gap-5 pt-2">
         <Reveal delay={0.35}>
@@ -161,7 +219,7 @@ export function S2() {
   );
 }
 
-/* ---------------- 3 · O QUE MUDA ---------------- */
+/* ---------------- 4 · O QUE MUDA ---------------- */
 export function S3() {
   const items = [
     ["Classificação", "Receitas e despesas em 5 categorias obrigatórias"],
@@ -176,7 +234,7 @@ export function S3() {
     ["Indicadores & covenants", "Contratos atrelados a subtotais precisam ser relidos"],
   ];
   return (
-    <SlideShell n={3} total={20} kicker="Visão geral" title={["O que muda na prática"]}
+    <SlideShell kicker="Visão geral" title={["O que muda na prática"]}
       subtitle="Três eixos — classificar, apresentar e divulgar — com efeitos em toda a cadeia contábil.">
       <div className="grid flex-1 grid-cols-5 grid-rows-2 gap-3 pt-1">
         {items.map(([t, d], i) => (
@@ -199,7 +257,7 @@ export function S3() {
   );
 }
 
-/* ---------------- 4 · 5 CATEGORIAS ---------------- */
+/* ---------------- 5 · 5 CATEGORIAS ---------------- */
 export function S4() {
   const cats = [
     { k: "operacional", d: "Categoria residual: toda receita e despesa das atividades principais que não cair nas demais." },
@@ -209,7 +267,7 @@ export function S4() {
     { k: "descontinuadas", d: "Resultado de operações descontinuadas conforme CPC 31 / IFRS 5." },
   ];
   return (
-    <SlideShell n={4} total={20} kicker="Nova estrutura da DRE" title={["Cinco categorias obrigatórias"]}
+    <SlideShell kicker="Nova estrutura da DRE" title={["Cinco categorias obrigatórias"]}
       subtitle="Toda receita e despesa da demonstração do resultado entra em uma — e somente uma — destas categorias.">
       <div className="grid flex-1 grid-cols-5 gap-3 pt-1">
         {cats.map((c, i) => (
@@ -249,15 +307,15 @@ export function S4() {
   );
 }
 
-/* ---------------- 5 · LUCRO OPERACIONAL ---------------- */
+/* ---------------- 6 · LUCRO OPERACIONAL ---------------- */
 export function S5() {
   const stack = [
-    { t: "Receitas e despesas da operação", w: "100%", c: "#00E5FF", o: 1 },
-    { t: "Sem exclusões “não recorrentes” discricionárias", w: "78%", c: "#00B8D4", o: 0.8 },
-    { t: "Mesma regra para toda empresa e todo período", w: "56%", c: "#38BDF8", o: 0.65 },
+    { t: "Receitas e despesas da operação", w: "100%", c: "#00E5FF" },
+    { t: "Sem exclusões “não recorrentes” discricionárias", w: "78%", c: "#00B8D4" },
+    { t: "Mesma regra para toda empresa e todo período", w: "56%", c: "#38BDF8" },
   ];
   return (
-    <SlideShell n={5} total={20} kicker="Subtotal obrigatório nº 1" title={["Lucro / prejuízo operacional"]}
+    <SlideShell kicker="Subtotal obrigatório nº 1" title={["Lucro / prejuízo operacional"]}
       subtitle="A soma de todas as receitas e despesas da categoria operacional — o primeiro número que o mercado vai comparar.">
       <div className="grid flex-1 grid-cols-[1.15fr_1fr] gap-8 pt-2">
         <div className="flex flex-col justify-center gap-4">

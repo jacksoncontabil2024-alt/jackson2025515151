@@ -15,6 +15,15 @@
 
 Notas: Abertura — promessa da reunião: sair sabendo o que muda, quando muda e o que a Felcont fará em 2026.
 
+## Slide 2 — Resumo executivo
+# Quatro perguntas, respostas diretas
+- O que é? IFRS 18 = norma global de apresentação (IASB, abr/2024); CPC 51 = versão brasileira (NBC TG 51 + Res. CVM 237), substitui o CPC 26 (R1). Não muda mensuração nem o lucro.
+- O que muda? DRE em 5 categorias, 2 subtotais obrigatórios, MPMs reconciliadas em nota, desagregação e DFC reparametrizada.
+- Quando entra em vigor? Exercícios a partir de 01/01/2027, retrospectivo (comparativo 2026 reexpresso). Antecipação permitida.
+- Abrir chamado no Questor? Sim — para levantar roadmap e de-para, não para trocar o plano de contas às cegas. [Confirmar com o fornecedor]
+
+Notas: Contrato da reunião — as 4 dúvidas universais respondidas de antemão; designar o responsável pelo chamado ao final.
+
 ## Slide 2 — Introdução
 # O que é a IFRS 18 — e o que é o CPC 51
 - IFRS 18 (IASB, abr/2024): substitui a IAS 1 na apresentação e divulgação

@@ -3,7 +3,7 @@ import Lenis from "lenis";
 import { Printer, X } from "lucide-react";
 import { SLIDES } from "./slides";
 import { SLIDE_TITLES, TOTAL_SLIDES } from "../data/slidesContent";
-import { StaticCtx } from "./bits";
+import { StaticCtx, SlideNumCtx } from "./bits";
 import { CANVAS_W, CANVAS_H } from "./SlideShell";
 
 export default function PrintView() {
@@ -53,7 +53,11 @@ export default function PrintView() {
           <div key={idx} className="print-sheet w-full" data-testid={`print-slide-${idx + 1}`}>
             <div className="overflow-hidden rounded-lg border border-white/10 shadow-2xl" style={{ width: CANVAS_W * scale, height: CANVAS_H * scale }}>
               <div className="print-canvas" style={{ transform: `scale(${scale})` }}>
-                <StaticCtx.Provider value={true}><S /></StaticCtx.Provider>
+                <StaticCtx.Provider value={true}>
+                  <SlideNumCtx.Provider value={{ n: idx + 1, total: TOTAL_SLIDES }}>
+                    <S />
+                  </SlideNumCtx.Provider>
+                </StaticCtx.Provider>
               </div>
             </div>
             <p className="print-toolbar mt-2 font-mono2 text-[10px] uppercase tracking-[0.24em] text-[#334155]">

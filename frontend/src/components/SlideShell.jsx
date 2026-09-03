@@ -1,11 +1,14 @@
-import React from "react";
-import { Reveal, MaskedTitle, Kicker } from "./bits";
+import React, { useContext } from "react";
+import { Reveal, MaskedTitle, Kicker, SlideNumCtx } from "./bits";
 import { LogoMark } from "./Logo";
 
 export const CANVAS_W = 1280;
 export const CANVAS_H = 720;
 
-export function SlideShell({ n, total, kicker, title, subtitle, children, right, tone }) {
+export function SlideShell({ n: nProp, total: totalProp, kicker, title, subtitle, children, right, tone }) {
+  const ctx = useContext(SlideNumCtx);
+  const n = ctx?.n ?? nProp;
+  const total = ctx?.total ?? totalProp;
   return (
     <div className="relative flex h-full w-full flex-col overflow-hidden bg-[#070A12]" data-testid="slide-canvas">
       <div className="deck-grid-bg pointer-events-none absolute inset-0 opacity-60" />
