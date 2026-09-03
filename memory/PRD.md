@@ -11,7 +11,7 @@ Apresentação de slides navegável no navegador (React), identidade visual Felc
 - Frontend-only: React 19 + Tailwind + Framer Motion + Lenis (sem backend/DB)
 - Rotas: `/` deck 16:9 (canvas 1280×720 escalonado) · `/apresentador` console (BroadcastChannel sync) · `/imprimir` exportação PDF (print CSS, 320mm×180mm paisagem)
 - Conteúdo centralizado em `src/data/slidesContent.js` (notas, DRE, de-para, chamado Questor, plano, riscos)
-- Downloads em `frontend/public/downloads/`: outline PPTX (`CPC51-IFRS18-conteudo-pptx.md`) e PNGs (`pngs/slide-01..20.png`)
+- Downloads em `frontend/public/downloads/`: outline PPTX (`CPC51-IFRS18-conteudo-pptx.md`), PPTX real (`CPC51-IFRS18-Felcont.pptx`, gerado por `scripts/build_pptx.py`, 21 slides com notas) e PNGs (`pngs/slide-01..21.png`)
 
 ## Implementado (2026-09-03)
 - Emblema oficial Felcont (enviado pelo usuário) integrado com fundo transparente na capa, rodapés, apresentador e PNGs — tagline "Contabilidade, Finanças e Auditoria"
@@ -25,6 +25,6 @@ Apresentação de slides navegável no navegador (React), identidade visual Felc
 - Modelo de chamado Questor com botão copiar
 - Conteúdo validado via pesquisa: IFRS 18 (abr/2024, vigência exercícios ≥ 01/01/2027, retrospectiva), CPC 51/NBC TG 51 (nov/2025), Res. CVM 237 (revoga 106/156) e Res. CVM 238 (Doc. Revisão 28)
 - P1: PDF das notas do apresentador (versão handout com notas por slide)
-- P1: gerar .pptx real a partir do outline (python-pptx)
+- P1: PDF das notas do apresentador (versão handout com notas por slide)
 - P2: tema claro opcional para projeção em ambiente claro
 - P2: painel de edição de slides (FastAPI + MongoDB) se o usuário quiser editar conteúdo sem código
