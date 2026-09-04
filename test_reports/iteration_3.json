@@ -1,0 +1,30 @@
+{
+  "summary": "Full-stack testing of the 4 new features in FELCONT REPORTS AI (waterfall DRE + PPTX, dynamic Folha tab, Comparativos, and Identidade Visual). Backend 8/8 pytest cases passed. Frontend verified via Playwright: DRE waterfall renders above table with 6 bars; tab-folha is hidden for analysis without folha data; Comparativos populates selects, runs /compare, renders table with Variação column and warning banner for different durations (Ano de 2025 ≈ 12 meses vs Jan a Jul de 2026 ≈ 7 meses); Configurações color-picker + save shows 'Salvo!' and logo upload updates preview + button label to 'Trocar logo'. Regression on deck /apresentacao-dre and Validação/Painel/Balanço tabs passed.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Comparativos", "issues": ["Quando não há indicadores comuns (rows vazio), a página mostra apenas o cabeçalho da tabela sem mensagem de empty-state; UX poderia exibir 'Sem indicadores comuns'."]},
+      {"screen": "Configurações", "issues": ["Após upload de logo, a label muda para 'Trocar logo' mas não há toast/mensagem de sucesso confirmando o envio."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_new_features.py",
+    "/app/backend/tests/test_felcont_reports.py",
+    "/app/test_reports/pytest/new_features.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Analise.jsx cresceu para ~485 linhas com 6+ sub-componentes (Validacao/Painel/DRE+Waterfall/Balanco/Folha/Diagnostico/Editor); ultrapassou o limite recomendado de 700 mas está no caminho. Recomenda-se extrair Waterfall/Folha para arquivos próprios agora que existem gráficos dedicados.",
+    "routes.py POST /analyses cria silenciosamente um novo cliente quando client_id não é enviado, mesmo que já exista cliente com o mesmo nome. Isso gerou clientes 'TEST_CmpClient' duplicados na base durante testes anteriores e afeta o UX de Comparativos (o mesmo nome aparece 2x no select). Considerar reutilizar cliente existente por nome+cnpj ou expor a listagem sem duplicatas.",
+    "Comparativos.jsx: /compare aceita ids de análises de clientes diferentes — a UI limita ao mesmo cliente, mas o endpoint não valida. Baixo risco, mas seria útil validação no backend.",
+    "_period_months() no routes.py é heurístico e retorna None facilmente; o warning só aparece quando ambos períodos retornam meses. Documentar formatos suportados nos placeholders do form."
+  ],
+  "updated_files": ["/app/backend/tests/test_new_features.py", "/app/test_reports/iteration_3.json"],
+  "success_rate": {"backend": "100% (8/8 new-feature tests)", "frontend": "100% (all listed flows)"},
+  "seed_data_creation": "Criadas via API duas análises TEST_CmpShared/TEST_CmpClient com period_label 'Ano de 2025' e 'Jan a Jul de 2026' para testar o warning de durações diferentes. Também upload de PNG 1x1 para /config/logo e alteração temporária de cor_destaque (restaurada para #04B7AF).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Todos os 4 novos recursos passaram nos testes de backend e frontend. Análise pronta 94dd99d3-2200-4734-b5f5-6138c1eede9f continua tendo apenas Balanço (sem DRE completa nem Folha); a aba Folha corretamente não aparece nesta análise. Waterfall DRE renderiza acima da tabela na aba DRE (6 barras: Receita Bruta → Deduções → Receita Líquida → Lucro Bruto → Despesas → Resultado) e slide type='waterfall' com título 'Formação do Resultado' está presente em slides após diagnose. /compare com o mesmo id nos dois lados retorna rows preenchidas (indicadores). Config default cor_primaria=#322F6A, cor_destaque=#04B7AF, has_logo=true (após upload de teste)."
+}

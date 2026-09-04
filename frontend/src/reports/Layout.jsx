@@ -1,11 +1,12 @@
 import { NavLink, Outlet, Link } from "react-router-dom";
-import { LayoutDashboard, Users, FilePlus2, Settings, Presentation, Sparkles } from "lucide-react";
+import { LayoutDashboard, Users, FilePlus2, Settings, Presentation, Sparkles, GitCompare } from "lucide-react";
 import { FELCONT_LOGO } from "@/reports/api";
 
 const items = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true, tid: "nav-dashboard" },
   { to: "/clientes", label: "Clientes", icon: Users, tid: "nav-clientes" },
   { to: "/nova-analise", label: "Nova Análise", icon: FilePlus2, tid: "nav-nova-analise" },
+  { to: "/comparativos", label: "Comparativos", icon: GitCompare, tid: "nav-comparativos" },
   { to: "/configuracoes", label: "Configurações", icon: Settings, tid: "nav-config" },
 ];
 

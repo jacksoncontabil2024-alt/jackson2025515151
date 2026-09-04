@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { api, statusLabel } from "@/reports/api";
-import { Users, ArrowLeft, FilePlus2, Building2 } from "lucide-react";
+import { Users, ArrowLeft, FilePlus2, Building2, Trash2 } from "lucide-react";
 
 const badge = (s) => <span className={"rp-badge rp-badge-" + s}>{statusLabel[s] || s}</span>;
 
@@ -13,7 +13,14 @@ export default function Clientes() {
 function ClientesList() {
   const [list, setList] = useState([]);
   const nav = useNavigate();
-  useEffect(() => { api.get("/clients").then((r) => setList(r.data)).catch(() => {}); }, []);
+  const load = () => api.get("/clients").then((r) => setList(r.data)).catch(() => {});
+  useEffect(() => { load(); }, []);
+  const del = async (e, c) => {
+    e.preventDefault(); e.stopPropagation();
+    if (!window.confirm(`Excluir o cliente "${c.name}" e todas as suas análises? Esta ação não pode ser desfeita.`)) return;
+    await api.delete(`/clients/${c.id}`);
+    load();
+  };
   return (
     <div data-testid="clientes-page">
       <div className="rp-head">
@@ -27,7 +34,12 @@ function ClientesList() {
             <div className="rp-row-l"><span className="rp-avatar"><Building2 size={18} /></span>
               <div><b>{c.name}</b><span className="rp-muted">{c.cnpj || "—"}</span></div>
             </div>
-            <span className="rp-pill">{c.analyses_count} análise(s)</span>
+            <div className="rp-row-r">
+              <span className="rp-pill">{c.analyses_count} análise(s)</span>
+              <button className="rp-icon-btn rp-danger" onClick={(e) => del(e, c)} data-testid={`delete-client-${c.id}`} title="Excluir cliente">
+                <Trash2 size={16} />
+              </button>
+            </div>
           </Link>
         ))}
       </div>

@@ -6,8 +6,10 @@ import Dashboard from "@/reports/Dashboard";
 import Clientes from "@/reports/Clientes";
 import NovaAnalise from "@/reports/NovaAnalise";
 import Analise from "@/reports/Analise";
+import Comparativos from "@/reports/Comparativos";
 import Configuracoes from "@/reports/Configuracoes";
 import DeckViewer from "@/reports/DeckViewer";
+import Portal from "@/reports/Portal";
 
 function App() {
   return (
@@ -19,9 +21,11 @@ function App() {
           <Route path="clientes/:id" element={<Clientes />} />
           <Route path="nova-analise" element={<NovaAnalise />} />
           <Route path="analise/:id" element={<Analise />} />
+          <Route path="comparativos" element={<Comparativos />} />
           <Route path="configuracoes" element={<Configuracoes />} />
         </Route>
         <Route path="/apresentacao-dre" element={<DeckViewer />} />
+        <Route path="/portal/:token" element={<Portal />} />
       </Routes>
     </BrowserRouter>
   );

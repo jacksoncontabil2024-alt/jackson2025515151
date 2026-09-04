@@ -1,41 +1,66 @@
-import { useState, useEffect } from "react";
-import { FELCONT_LOGO } from "@/reports/api";
-import { Save } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { api } from "@/reports/api";
+import { Save, UploadCloud } from "lucide-react";
 
-const swatches = [
-  ["Índigo (primária escura)", "#322F6A"],
-  ["Turquesa (destaque)", "#04B7AF"],
-  ["Âmbar (atenção)", "#E8A13A"],
-  ["Verde (positivo)", "#57B14A"],
-  ["Vermelho (crítico)", "#D6453F"],
+const COLORS = [
+  ["cor_primaria", "Cor primária (fundo escuro)"],
+  ["cor_secundaria", "Cor secundária"],
+  ["cor_destaque", "Cor de destaque"],
 ];
 
 export default function Configuracoes() {
-  const [cfg, setCfg] = useState({ phone: "", email: "", site: "", footer: "" });
+  const [cfg, setCfg] = useState({ cor_primaria: "#322F6A", cor_secundaria: "#3E3A82", cor_destaque: "#04B7AF" });
   const [saved, setSaved] = useState(false);
-  useEffect(() => {
-    const s = localStorage.getItem("felcont_cfg");
-    if (s) setCfg(JSON.parse(s));
-  }, []);
-  const save = () => { localStorage.setItem("felcont_cfg", JSON.stringify(cfg)); setSaved(true); setTimeout(() => setSaved(false), 1500); };
+  const [logoV, setLogoV] = useState(0);
+  const fileRef = useRef();
+  const BACKEND = process.env.REACT_APP_BACKEND_URL;
+
+  const load = () => api.get("/config").then((r) => setCfg((c) => ({ ...c, ...r.data }))).catch(() => {});
+  useEffect(() => { load(); }, []);
+
+  const save = async () => {
+    await api.put("/config", {
+      cor_primaria: cfg.cor_primaria, cor_secundaria: cfg.cor_secundaria, cor_destaque: cfg.cor_destaque,
+      phone: cfg.phone, email: cfg.email, site: cfg.site,
+    });
+    setSaved(true); setTimeout(() => setSaved(false), 1500);
+  };
+
+  const onLogo = async (e) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    const fd = new FormData(); fd.append("file", f);
+    await api.post("/config/logo", fd, { headers: { "Content-Type": "multipart/form-data" } });
+    setCfg((c) => ({ ...c, has_logo: true })); setLogoV((v) => v + 1);
+  };
+
+  const logoSrc = cfg.has_logo
+    ? `${BACKEND}/api/reports/config/logo?v=${logoV}`
+    : "https://customer-assets-eiarnc6j.emergentagent.net/job_dre-ronaldo-donadon/artifacts/gc2u16q4_image.png";
 
   return (
     <div data-testid="config-page">
-      <div className="rp-head"><div><h1>Configurações · Identidade Visual</h1><p>Padrão FELCONT aplicado aos relatórios</p></div></div>
+      <div className="rp-head"><div><h1>Configurações · Identidade Visual</h1><p>Padrão aplicado a todos os relatórios gerados</p></div></div>
 
       <div className="rp-grid2">
         <div className="rp-card">
           <div className="rp-card-h"><h3>Logotipo</h3></div>
-          <div className="rp-logo-preview"><img src={FELCONT_LOGO} alt="FELCONT" /></div>
-          <p className="rp-muted">Logo para fundo escuro (padrão dos relatórios). Envio de novo logo pode ser habilitado futuramente sem alterar o código.</p>
+          <div className="rp-logo-preview" style={{ background: cfg.cor_primaria }}><img src={logoSrc} alt="logo" /></div>
+          <input type="file" accept="image/*" hidden ref={fileRef} onChange={onLogo} data-testid="logo-input" />
+          <div className="rp-actions" style={{ justifyContent: "flex-start" }}>
+            <button className="rp-btn rp-btn-ghost" onClick={() => fileRef.current?.click()} data-testid="logo-upload-btn">
+              <UploadCloud size={16} /> {cfg.has_logo ? "Trocar logo" : "Enviar logo"}
+            </button>
+          </div>
+          <p className="rp-muted">O logo é usado nas capas e no encerramento dos relatórios (fundo escuro). PNG/SVG até 3MB.</p>
         </div>
 
         <div className="rp-card">
           <div className="rp-card-h"><h3>Paleta de cores</h3></div>
-          {swatches.map(([lab, hex]) => (
-            <div className="rp-swatch" key={hex} data-testid={`swatch-${hex}`}>
-              <span className="rp-swatch-c" style={{ background: hex }} />
-              <b>{lab}</b><code>{hex}</code>
+          {COLORS.map(([k, lab]) => (
+            <div className="rp-swatch" key={k} data-testid={`color-${k}`}>
+              <input type="color" className="rp-color" value={cfg[k] || "#000000"}
+                onChange={(e) => setCfg({ ...cfg, [k]: e.target.value })} data-testid={`color-input-${k}`} />
+              <b>{lab}</b><code>{cfg[k]}</code>
             </div>
           ))}
         </div>
@@ -47,7 +72,7 @@ export default function Configuracoes() {
           {["phone", "email", "site"].map((k) => (
             <label className="rp-field" key={k}>
               <span>{k === "phone" ? "Telefone" : k === "email" ? "E-mail" : "Site"}</span>
-              <input data-testid={`cfg-${k}`} value={cfg[k]} onChange={(e) => setCfg({ ...cfg, [k]: e.target.value })} />
+              <input data-testid={`cfg-${k}`} value={cfg[k] || ""} onChange={(e) => setCfg({ ...cfg, [k]: e.target.value })} />
             </label>
           ))}
         </div>

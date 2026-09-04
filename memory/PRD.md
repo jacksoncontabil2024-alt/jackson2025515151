@@ -62,3 +62,11 @@ padrão FELCONT (índigo #322F6A / turquesa #04B7AF). Regra crítica: NUNCA inve
 - Upload de novo logo pela tela de Configurações (salvar no backend/object storage).
 - Slide de DRE em cascata (waterfall) e slide comparativo dinâmicos.
 - DELETE de análises/clientes; skeleton loading; toast de sucesso ao salvar.
+
+## Onda 3 (04/09) — Portal do Cliente + extras
+- **Portal do Cliente** (camada segura, admin intacto): botão "Compartilhar com Cliente" na análise gera link /portal/{token} (token secrets.token_urlsafe(32), guarda sha256 no banco em `client_portals`). Copiar/Abrir/Revogar/Novo link + status/criado/último acesso/nº acessos.
+- Rotas públicas /api/portal/{token}[/company|/analyses|/analysis/{id}|/panel|/dre|/balance|/diagnostic] — empresa determinada pelo TOKEN. Isolamento total: análise/empresa de terceiros => HTTP 403 "Acesso não autorizado para esta empresa."; token inválido/revogado => 404; rate limit 429. Link permanente (dados atuais), seletor de período só da empresa.
+- Página /portal/:token reaproveita Painel/DRE/Balanço/**Folha**/Diagnóstico (sem menu admin, sem Validação/Editor). Cabeçalho FELCONT + empresa + período + última atualização.
+- **Excluir cliente**: DELETE /api/reports/clients/{id} (cascata: análises + portais) + botão na lista de Clientes (com confirmação).
+- **DRE em Cascata (waterfall)**, **Análise de Folha** (composição + evolução mensal), **Comparativos** entre períodos (com aviso de durações diferentes) e **Configurações** (upload de logo + cores aplicados na geração) — todos entregues e testados.
+- Testes: iteration_3 (waterfall/folha/compare/config) e iteration_4 (portal) — 100%.

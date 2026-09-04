@@ -130,7 +130,9 @@ app.include_router(api_router)
 
 # FELCONT REPORTS AI
 from felcont_reports.routes import router as reports_router  # noqa: E402
+from felcont_reports.routes import portal_router as portal_router  # noqa: E402
 app.include_router(reports_router)
+app.include_router(portal_router)
 
 app.add_middleware(
     CORSMiddleware,

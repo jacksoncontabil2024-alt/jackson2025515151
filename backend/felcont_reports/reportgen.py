@@ -66,6 +66,10 @@ def build_slides(analysis):
             subtitle="Margens e rentabilidade")
         add("barras", "Receita e Resultado", _dre_bars(ind),
             subtitle="Comparativo das principais linhas da DRE")
+        wf = _waterfall_steps(dre)
+        if len(wf) >= 3:
+            add("waterfall", "Formação do Resultado", {"steps": wf},
+                subtitle="DRE em cascata (waterfall)")
 
     caixa = fin.get("caixa_mensal") or []
     if caixa:
@@ -85,6 +89,10 @@ def build_slides(analysis):
     if folha:
         add("kpis", "Folha de Pagamento", {"items": _folha_kpis(folha)},
             subtitle="Composição e custo de pessoal")
+        mensal = folha.get("mensal") or []
+        if len(mensal) >= 2:
+            add("barras", "Evolução da Folha", _folha_mensal(mensal),
+                subtitle="Composição mensal da folha de pagamento")
 
     if dre:
         add("dre", "DRE Gerencial", {"dre": dre}, subtitle="Demonstração do Resultado — padrão FELCONT")
@@ -145,6 +153,55 @@ def _folha_kpis(folha):
     if folha.get("num_colaboradores") is not None:
         items.append({"label": "Colaboradores", "value": str(int(num(folha["num_colaboradores"]))), "accent": "green"})
     return items or [{"label": "Folha", "value": INSUF, "accent": "amber"}]
+
+
+def _folha_mensal(mensal):
+    from .indicators import num
+    cats = [m.get("mes") for m in mensal]
+    comps = [("proventos", "Proventos", "indigo"), ("encargos", "Encargos", "teal"),
+             ("beneficios", "Benefícios", "green"), ("provisoes", "Provisões", "amber")]
+    series = []
+    for key, name, color in comps:
+        vals = [num(m.get(key)) for m in mensal]
+        if any(v is not None for v in vals):
+            series.append({"name": name, "color": color, "values": [v or 0 for v in vals]})
+    return {"categories": cats, "series": series, "unit": "R$", "stacked": True}
+
+
+def _waterfall_steps(dre):
+    """Monta os passos da cascata da DRE (apenas com valores disponíveis)."""
+    from .indicators import num
+    g = lambda k: num(dre.get(k))
+    rob, ded, rol = g("receita_operacional_bruta"), g("deducoes"), g("receita_operacional_liquida")
+    custos, lucro = g("custos"), g("lucro_bruto")
+    desp, recfin = g("despesas_operacionais"), g("receitas_financeiras")
+    res = g("resultado_liquido")
+    if res is None:
+        res = g("resultado_operacional")
+    if rol is None and rob is not None and ded is not None:
+        rol = rob - abs(ded)
+    if lucro is None and rol is not None and custos is not None:
+        lucro = rol - abs(custos)
+    seq = [
+        ("Receita Bruta", "total", rob),
+        ("(–) Deduções", "delta", -abs(ded) if ded is not None else None),
+        ("Receita Líquida", "total", rol),
+        ("(–) Custos", "delta", -abs(custos) if custos is not None else None),
+        ("Lucro Bruto", "total", lucro),
+        ("(–) Despesas", "delta", -abs(desp) if desp is not None else None),
+        ("Resultado", "total", res),
+    ]
+    steps, running = [], 0.0
+    for label, kind, val in seq:
+        if val is None:
+            continue
+        if kind == "total":
+            b, t = 0.0, float(val); running = float(val)
+        else:
+            b = running; t = running + float(val); running = t
+        steps.append({"label": label, "kind": kind, "value": float(val),
+                      "bottom": b, "top": t})
+    return steps
 
 
 # ============================================================ helpers de desenho
@@ -259,7 +316,8 @@ def _r_barras(s, sl, num, total):
     cd = CategoryChartData(); cd.categories = cats
     for ser in series:
         cd.add_series(ser.get("name", "Série"), [(_f(v)) for v in ser.get("values", [])])
-    gf = s.shapes.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, Inches(0.62), Inches(2.0),
+    ctype = XL_CHART_TYPE.COLUMN_STACKED if d.get("stacked") else XL_CHART_TYPE.COLUMN_CLUSTERED
+    gf = s.shapes.add_chart(ctype, Inches(0.62), Inches(2.0),
                             Inches(12.09), Inches(4.4), cd)
     ch = gf.chart; ch.has_legend = len(series) > 1
     if ch.has_legend:
@@ -413,6 +471,61 @@ def _cell(cell, text, bg, fg, bold, align):
     r.font.size = Pt(10.5); r.font.bold = bold; r.font.color.rgb = fg; r.font.name = BODY_FONT
 
 
+def _r_waterfall(s, sl, num, total):
+    _bg(s, WHITE)
+    _header(s, sl["title"], sl.get("subtitle") or "", num, total)
+    steps = sl["data"].get("steps") or []
+    if len(steps) < 2:
+        _txt(s, 0.62, 3, 10, 1, [[("Dados insuficientes para a cascata.", 16, GRAY, False, BODY_FONT)]]); _footer(s, ""); return
+    cats = [st["label"] for st in steps]
+    base, pos, neg = [], [], []
+    for st in steps:
+        b, t = st["bottom"], st["top"]
+        base.append(b if b > 0 else 0)
+        pos.append((t - b) if b > 0 else (t if t > 0 else 0))
+        neg.append(b if b < 0 else 0)
+    cd = CategoryChartData(); cd.categories = cats
+    cd.add_series("base", base); cd.add_series("pos", pos); cd.add_series("neg", neg)
+    gf = s.shapes.add_chart(XL_CHART_TYPE.COLUMN_STACKED, Inches(0.62), Inches(2.0),
+                            Inches(12.09), Inches(4.1), cd)
+    ch = gf.chart; ch.has_legend = False; ch.has_title = False
+    plot = ch.plots[0]; plot.gap_width = 55
+    s_base, s_pos, s_neg = ch.series[0], ch.series[1], ch.series[2]
+    s_base.format.fill.background(); s_base.format.line.fill.background()
+
+    def color_for(st):
+        if st["kind"] == "total":
+            if "Lucro" in st["label"]:
+                return GREEN
+            if "Resultado" in st["label"]:
+                return GREEN if st["value"] >= 0 else RED
+            return TEAL
+        return GREEN if st["value"] >= 0 else AMBER
+    for i, st in enumerate(steps):
+        col = color_for(st)
+        for cser in (s_pos, s_neg):
+            p = cser.points[i]; p.format.fill.solid(); p.format.fill.fore_color.rgb = col
+            p.format.line.color.rgb = WHITE; p.format.line.width = Pt(0.75)
+    va = ch.value_axis; va.has_major_gridlines = True
+    va.major_gridlines.format.line.color.rgb = GRAY_BD; va.major_gridlines.format.line.width = Pt(0.5)
+    va.tick_labels.font.size = Pt(8); va.tick_labels.number_format = '#,##0'
+    va.tick_labels.number_format_is_linked = False; va.tick_labels.font.color.rgb = GRAY
+    va.format.line.fill.background()
+    ca = ch.category_axis; ca.tick_labels.font.size = Pt(9); ca.tick_labels.font.bold = True
+    ca.tick_labels.font.color.rgb = INK; ca.format.line.color.rgb = GRAY_BD
+    plot.has_data_labels = True
+    dl = plot.data_labels; dl.show_value = False; dl.show_series_name = False
+    dl.show_category_name = False; dl.show_legend_key = False
+    for i, st in enumerate(steps):
+        tgt = s_pos if (pos[i] != 0 or neg[i] == 0) else s_neg
+        d = tgt.points[i].data_label; d.text_frame.text = brl(st["value"])
+        for p in d.text_frame.paragraphs:
+            for r in p.runs:
+                r.font.size = Pt(8.5); r.font.bold = True; r.font.name = BODY_FONT
+                r.font.color.rgb = WHITE if base[i] > 0 or neg[i] != 0 else INK
+    _footer(s, "Cascata da DRE — gráfico nativo editável do PowerPoint.")
+
+
 def _f(v):
     from .indicators import num
     n = num(v)
@@ -420,22 +533,68 @@ def _f(v):
 
 
 _RENDER = {"capa": _r_capa, "kpis": _r_kpis, "resumo": _r_kpis, "barras": _r_barras,
-           "dre": _r_dre, "balanco": _r_balanco, "lista": _r_lista, "conclusao": _r_conclusao}
+           "dre": _r_dre, "balanco": _r_balanco, "lista": _r_lista, "conclusao": _r_conclusao,
+           "waterfall": _r_waterfall}
 
 
-def generate_pptx(slides, meta, out_path):
-    prs = Presentation()
-    prs.slide_width = Inches(SW); prs.slide_height = Inches(SH)
-    blank = prs.slide_layouts[6]
-    vis = [sl for sl in slides if sl.get("visible", True)]
-    total = len(vis)
-    for i, sl in enumerate(vis, start=1):
-        s = prs.slides.add_slide(blank)
-        fn = _RENDER.get(sl["type"], _r_kpis)
-        if sl["type"] in ("capa", "conclusao"):
-            fn(s, sl, meta)
-        else:
-            fn(s, sl, i, total)
-    Path(out_path).parent.mkdir(parents=True, exist_ok=True)
-    prs.save(out_path)
+def _hex(h):
+    h = h.lstrip("#")
+    return RGBColor(int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
+
+
+def _apply_theme(config):
+    """Aplica logo/cores da configuração (globais do módulo). Retorna função de restauração."""
+    global INDIGO, INDIGO2, TEAL, LOGO_PNG
+    saved = (INDIGO, INDIGO2, TEAL, LOGO_PNG)
+    tmp_logo = None
+    if config:
+        try:
+            if config.get("cor_primaria"):
+                INDIGO = _hex(config["cor_primaria"])
+            if config.get("cor_secundaria"):
+                INDIGO2 = _hex(config["cor_secundaria"])
+            if config.get("cor_destaque"):
+                TEAL = _hex(config["cor_destaque"])
+        except Exception:
+            pass
+        if config.get("logo_b64"):
+            try:
+                import base64, tempfile
+                raw = base64.b64decode(str(config["logo_b64"]).split(",")[-1])
+                tf = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+                tf.write(raw); tf.close()
+                LOGO_PNG = tf.name; tmp_logo = tf.name
+            except Exception:
+                pass
+
+    def restore():
+        global INDIGO, INDIGO2, TEAL, LOGO_PNG
+        INDIGO, INDIGO2, TEAL, LOGO_PNG = saved
+        if tmp_logo:
+            try:
+                os.unlink(tmp_logo)
+            except Exception:
+                pass
+    return restore
+
+
+def generate_pptx(slides, meta, out_path, config=None):
+    restore = _apply_theme(config)
+    try:
+        prs = Presentation()
+        prs.slide_width = Inches(SW); prs.slide_height = Inches(SH)
+        blank = prs.slide_layouts[6]
+        vis = [sl for sl in slides if sl.get("visible", True)]
+        total = len(vis)
+        for i, sl in enumerate(vis, start=1):
+            s = prs.slides.add_slide(blank)
+            fn = _RENDER.get(sl["type"], _r_kpis)
+            if sl["type"] in ("capa", "conclusao"):
+                fn(s, sl, meta)
+            else:
+                fn(s, sl, i, total)
+        Path(out_path).parent.mkdir(parents=True, exist_ok=True)
+        prs.save(out_path)
+    finally:
+        restore()
     return out_path

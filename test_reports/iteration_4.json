@@ -1,0 +1,23 @@
+{
+  "summary": "Testes completos do Portal do Cliente e isolamento por company_id. Backend: 16/16 pytest cases passaram (CRUD admin de portal, geração/regeneração/revogação de token, resolução por sha256 hash, sessão pública com company+periods+default_analysis_id, análise própria = 200, análise de OUTRA empresa = 403 exatamente com 'Acesso não autorizado para esta empresa.' nos endpoints /analysis/{id}, /panel, /dre, /balance, /diagnostic; token inválido = 404; /analyses do portal contém somente análises com client_id == company do token). Regressão admin OK (/dashboard, /clients, /analyses/{id}, /config). Frontend: em /analise/{id} o botão btn-share-portal abre share-panel; ao gerar, portal-url, btn-copy-link, btn-open-link, btn-regenerate-link e btn-revoke-link aparecem. O portal público em /portal/{token} renderiza portal-page com portal-company='ACE Catanduva', SEM o menu admin (reports-shell), SEM abas Validação/Editor; abas ptab-painel/ptab-dre/ptab-balanco/ptab-diagnostico trocam de conteúdo. /portal/tokeninvalido mostra portal-error corretamente.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_client_portal.py",
+    "/app/test_reports/pytest/client_portal.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Rate limiting em _hits (routes.py) é in-memory (defaultdict) e por processo. Em ambiente multi-worker/multi-instância a proteção 429 pode ser burlada. Considerar Redis ou motor Mongo com TTL se o tráfego crescer.",
+    "portal_router é público (sem CORS/CSRF/nonce). Como a superfície agrega dados financeiros, avaliar adicionar cabeçalhos de segurança (X-Robots-Tag: noindex, Cache-Control: no-store) para evitar indexação/caching de páginas do portal.",
+    "revoke_client_portal retorna {'ok': True, 'active': False} — inconsistente com o formato de _portal_view devolvido pelas outras rotas admin de portal. Sugerido padronizar retornando {'exists': False, 'active': False} para o frontend não precisar tratar dois formatos.",
+    "_portal_view expõe o próprio token em GET /clients/{id}/portal (útil para o admin copiar), mas convém deixar explícito no docstring por que o token puro é retornado além do token_hash armazenado — evita futuros PRs que 'ocultem' o token pensando em segurança e quebrem o botão Copiar.",
+    "Analise.jsx + Portal.jsx reutilizam corretamente Painel/DRE/Balanco/DiagnosticoView; mantidos os data-testid. Portal.jsx (~90 linhas) OK. Sem regressões observadas."
+  ],
+  "updated_files": ["/app/backend/tests/test_client_portal.py", "/app/test_reports/iteration_4.json"],
+  "success_rate": {"backend": "100% (16/16)", "frontend": "100% (all listed flows)"},
+  "seed_data_creation": "Nenhuma. Foram usados o cliente ACE (analysis 94dd99d3-...) e HIERARCA (a6326216-...) já existentes. Portais criados/regenerados/revogados via API durante os testes (estado final: portal ACE ativo com token novo).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Portal do Cliente 100% funcional. Isolamento por company_id validado em /analysis/{id}, /panel, /dre, /balance e /diagnostic (403 exato 'Acesso não autorizado para esta empresa.'). Token inválido→404, revogado→404, regenerado invalida o anterior. Portal front usa data-testid: portal-page, portal-company, portal-period, portal-tabs, ptab-{painel,dre,balanco,diagnostico}, portal-error. Botões admin: btn-share-portal, share-panel, btn-generate-link, portal-url, btn-copy-link, btn-open-link, btn-regenerate-link, btn-revoke-link. Coleção Mongo: client_portals (fields: company_id, token, token_hash, active, created_at, revoked_at, last_access_at, access_count)."
+}

@@ -1,7 +1,11 @@
 """API do FELCONT REPORTS AI."""
 import os
 import uuid
+import time
 import shutil
+import secrets
+import hashlib
+from collections import defaultdict, deque
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import List, Optional
@@ -25,8 +29,11 @@ _client = AsyncIOMotorClient(os.environ["MONGO_URL"])
 _db = _client[os.environ["DB_NAME"]]
 clients_col = _db["fr_clients"]
 analyses_col = _db["fr_analyses"]
+config_col = _db["fr_config"]
+portals_col = _db["client_portals"]
 
 router = APIRouter(prefix="/api/reports")
+portal_router = APIRouter(prefix="/api/portal")
 
 
 def now_iso():
@@ -76,6 +83,17 @@ async def get_client(client_id: str):
     ).sort("created_at", -1).to_list(200)
     c["analyses"] = analyses
     return c
+
+
+@router.delete("/clients/{client_id}")
+async def delete_client(client_id: str):
+    c = await clients_col.find_one({"id": client_id})
+    if not c:
+        raise HTTPException(404, "Cliente não encontrado")
+    an = await analyses_col.delete_many({"client_id": client_id})
+    await portals_col.delete_many({"company_id": client_id})
+    await clients_col.delete_one({"id": client_id})
+    return {"ok": True, "deleted_analyses": an.deleted_count}
 
 
 # --------------------------------------------------------------- Análises
@@ -225,10 +243,11 @@ async def generate_report(analysis_id: str):
         raise HTTPException(404, "Análise não encontrada")
     slides = a.get("slides") or reportgen.build_slides(a)
     meta = a.get("meta") or {}
+    cfg = await config_col.find_one({"id": "default"})
     out_dir = GEN_DIR / analysis_id
     out_dir.mkdir(parents=True, exist_ok=True)
     pptx_path = out_dir / "FELCONT_Relatorio_Gerencial.pptx"
-    reportgen.generate_pptx(slides, meta, str(pptx_path))
+    reportgen.generate_pptx(slides, meta, str(pptx_path), config=clean(cfg))
     pdf_ok = _to_pdf(str(pptx_path), str(out_dir))
     await analyses_col.update_one({"id": analysis_id}, {"$set": {
         "status": "gerado", "generated_at": now_iso(),
@@ -271,6 +290,118 @@ async def download_pdf(analysis_id: str):
     return FileResponse(p, filename="FELCONT_Relatorio_Gerencial.pdf", media_type="application/pdf")
 
 
+@router.get("/config")
+async def get_config():
+    cfg = clean(await config_col.find_one({"id": "default"})) or {}
+    cfg.setdefault("cor_primaria", "#322F6A")
+    cfg.setdefault("cor_secundaria", "#3E3A82")
+    cfg.setdefault("cor_destaque", "#04B7AF")
+    cfg["has_logo"] = bool(cfg.get("logo_b64"))
+    cfg.pop("logo_b64", None)
+    return cfg
+
+
+class ConfigIn(BaseModel):
+    cor_primaria: Optional[str] = None
+    cor_secundaria: Optional[str] = None
+    cor_destaque: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    site: Optional[str] = None
+
+
+@router.put("/config")
+async def put_config(payload: ConfigIn):
+    patch = {k: v for k, v in payload.model_dump().items() if v is not None}
+    patch["updated_at"] = now_iso()
+    await config_col.update_one({"id": "default"}, {"$set": patch, "$setOnInsert": {"id": "default"}}, upsert=True)
+    return await get_config()
+
+
+@router.post("/config/logo")
+async def upload_logo(file: UploadFile = File(...)):
+    import base64
+    raw = await file.read()
+    if len(raw) > 3_000_000:
+        raise HTTPException(400, "Logo muito grande (máx 3MB).")
+    b64 = base64.b64encode(raw).decode()
+    await config_col.update_one({"id": "default"},
+                                {"$set": {"logo_b64": b64, "logo_mime": file.content_type or "image/png",
+                                          "updated_at": now_iso()},
+                                 "$setOnInsert": {"id": "default"}}, upsert=True)
+    return {"ok": True, "has_logo": True}
+
+
+@router.get("/config/logo")
+async def get_logo():
+    import base64
+    from fastapi.responses import Response
+    cfg = await config_col.find_one({"id": "default"})
+    if not cfg or not cfg.get("logo_b64"):
+        raise HTTPException(404, "Sem logo")
+    return Response(content=base64.b64decode(cfg["logo_b64"]),
+                    media_type=cfg.get("logo_mime", "image/png"))
+
+
+def _period_months(label):
+    """Estimativa grosseira de nº de meses a partir do rótulo do período."""
+    if not label:
+        return None
+    meses = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
+    low = label.lower()
+    found = [i for i, m in enumerate(meses) if m in low]
+    if "a " in low or "-" in low or "–" in low:
+        if len(found) >= 2:
+            return found[-1] - found[0] + 1
+    if "ano" in low or "anual" in low or (low.strip().isdigit() and len(low.strip()) == 4):
+        return 12
+    return len(found) or None
+
+
+@router.get("/compare")
+async def compare(a: str, b: str):
+    A = await analyses_col.find_one({"id": a})
+    B = await analyses_col.find_one({"id": b})
+    if not A or not B:
+        raise HTTPException(404, "Análise não encontrada")
+
+    def index(an):
+        ind = an.get("indicators") or {}
+        out = {}
+        for grp in ("cards", "margens", "liquidez"):
+            for c in ind.get(grp, []):
+                if c["key"] not in out:
+                    out[c["key"]] = c
+        return out
+
+    ia, ib = index(A), index(B)
+    keys = [k for k in ia if k in ib]
+    rows = []
+    for k in keys:
+        ca, cb = ia[k], ib[k]
+        va, vb = ca.get("value"), cb.get("value")
+        var_abs = (vb - va) if (va is not None and vb is not None) else None
+        var_pct = (var_abs / abs(va) * 100) if (var_abs is not None and va not in (None, 0)) else None
+        rows.append({
+            "key": k, "label": ca["label"], "unit": ca.get("unit"),
+            "a_value": va, "a_display": ca.get("display"),
+            "b_value": vb, "b_display": cb.get("display"),
+            "var_abs": var_abs, "var_pct": var_pct,
+        })
+    ma = _period_months(A.get("period_label"))
+    mb = _period_months(B.get("period_label"))
+    warn = None
+    if ma and mb and ma != mb:
+        warn = ("Os períodos analisados possuem durações diferentes "
+                f"({A.get('period_label')} ≈ {ma} meses vs {B.get('period_label')} ≈ {mb} meses). "
+                "A comparação deve ser interpretada considerando essa diferença.")
+    return {
+        "a": {"id": a, "client_name": A.get("client_name"), "period": A.get("period_label")},
+        "b": {"id": b, "client_name": B.get("client_name"), "period": B.get("period_label")},
+        "rows": rows, "warning": warn,
+    }
+
+
 @router.get("/dashboard")
 async def dashboard():
     total_clients = await clients_col.count_documents({})
@@ -285,3 +416,183 @@ async def dashboard():
     ).sort("created_at", -1).to_list(6)
     return {"clients": total_clients, "analyses": total_analyses, "pending": pending,
             "inconsistencies": inconsist, "recent_analyses": recent, "recent_clients": recent_clients}
+
+
+# ============================================================ PORTAL DO CLIENTE
+def _hash_token(tok: str) -> str:
+    return hashlib.sha256(tok.encode()).hexdigest()
+
+
+def _portal_view(p: dict) -> dict:
+    return {
+        "exists": True, "active": p.get("active", True),
+        "token": p.get("token"), "path": f"/portal/{p.get('token')}",
+        "created_at": p.get("created_at"), "revoked_at": p.get("revoked_at"),
+        "last_access_at": p.get("last_access_at"), "access_count": p.get("access_count", 0),
+    }
+
+
+async def _require_client(client_id: str):
+    c = await clients_col.find_one({"id": client_id})
+    if not c:
+        raise HTTPException(404, "Cliente não encontrado")
+    return c
+
+
+@router.get("/clients/{client_id}/portal")
+async def get_client_portal(client_id: str):
+    await _require_client(client_id)
+    p = await portals_col.find_one({"company_id": client_id, "active": True})
+    return _portal_view(p) if p else {"exists": False, "active": False}
+
+
+async def _create_portal(client_id: str) -> dict:
+    tok = secrets.token_urlsafe(32)
+    doc = {"id": str(uuid.uuid4()), "company_id": client_id, "token": tok,
+           "token_hash": _hash_token(tok), "active": True, "created_at": now_iso(),
+           "updated_at": now_iso(), "revoked_at": None, "last_access_at": None, "access_count": 0}
+    await portals_col.insert_one(doc)
+    return doc
+
+
+@router.post("/clients/{client_id}/portal")
+async def create_client_portal(client_id: str):
+    await _require_client(client_id)
+    p = await portals_col.find_one({"company_id": client_id, "active": True})
+    if p:
+        return _portal_view(p)
+    return _portal_view(await _create_portal(client_id))
+
+
+@router.post("/clients/{client_id}/portal/regenerate")
+async def regenerate_client_portal(client_id: str):
+    await _require_client(client_id)
+    await portals_col.update_many({"company_id": client_id, "active": True},
+                                  {"$set": {"active": False, "revoked_at": now_iso()}})
+    return _portal_view(await _create_portal(client_id))
+
+
+@router.post("/clients/{client_id}/portal/revoke")
+async def revoke_client_portal(client_id: str):
+    await _require_client(client_id)
+    await portals_col.update_many({"company_id": client_id, "active": True},
+                                  {"$set": {"active": False, "revoked_at": now_iso()}})
+    return {"ok": True, "active": False}
+
+
+# ---- rotas públicas do portal (autorização determinada pelo TOKEN) ----
+_hits = defaultdict(deque)
+
+
+def _rate_ok(key: str, limit: int = 90, window: int = 60) -> bool:
+    now = time.time(); q = _hits[key]
+    while q and now - q[0] > window:
+        q.popleft()
+    if len(q) >= limit:
+        return False
+    q.append(now); return True
+
+
+async def _resolve_portal(token: str) -> dict:
+    if not _rate_ok(token):
+        raise HTTPException(429, "Muitas requisições. Tente novamente em instantes.")
+    p = await portals_col.find_one({"token_hash": _hash_token(token), "active": True})
+    if not p:
+        raise HTTPException(404, "Link inválido, expirado ou revogado.")
+    return p
+
+
+def _sanitize_analysis(a: dict) -> dict:
+    return {k: a.get(k) for k in ("id", "client_name", "cnpj", "period_label", "meta",
+                                  "indicators", "financials", "diagnosis", "updated_at",
+                                  "generated_at", "created_at", "status")}
+
+
+async def _company_analyses(company_id: str):
+    return await analyses_col.find(
+        {"client_id": company_id, "indicators": {"$ne": None}}, {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+
+
+async def _owned_analysis(p: dict, analysis_id: str) -> dict:
+    a = await analyses_col.find_one({"id": analysis_id})
+    if not a:
+        raise HTTPException(404, "Análise não encontrada")
+    if a.get("client_id") != p["company_id"]:
+        raise HTTPException(403, "Acesso não autorizado para esta empresa.")
+    return a
+
+
+@portal_router.get("/{token}")
+async def portal_session(token: str):
+    p = await _resolve_portal(token)
+    await portals_col.update_one({"id": p["id"]},
+                                 {"$set": {"last_access_at": now_iso()}, "$inc": {"access_count": 1}})
+    c = await clients_col.find_one({"id": p["company_id"]}) or {}
+    analyses = await _company_analyses(p["company_id"])
+    periods = [{"id": a["id"], "period_label": a.get("period_label"),
+                "updated_at": a.get("updated_at") or a.get("created_at")} for a in analyses]
+    stamps = [a.get("updated_at") or a.get("created_at") for a in analyses if (a.get("updated_at") or a.get("created_at"))]
+    src = list({(d.get("doc_type") for d in (analyses[0].get("documents", []) if analyses else []))} or set())
+    return {
+        "company": {"name": c.get("name"), "cnpj": c.get("cnpj"), "razao_social": c.get("razao_social")},
+        "periods": periods,
+        "default_analysis_id": analyses[0]["id"] if analyses else None,
+        "last_update": max(stamps) if stamps else None,
+    }
+
+
+@portal_router.get("/{token}/company")
+async def portal_company(token: str):
+    p = await _resolve_portal(token)
+    c = await clients_col.find_one({"id": p["company_id"]}) or {}
+    return {"name": c.get("name"), "cnpj": c.get("cnpj"), "razao_social": c.get("razao_social")}
+
+
+@portal_router.get("/{token}/analyses")
+async def portal_analyses(token: str):
+    p = await _resolve_portal(token)
+    analyses = await _company_analyses(p["company_id"])
+    return [{"id": a["id"], "period_label": a.get("period_label"),
+             "updated_at": a.get("updated_at") or a.get("created_at")} for a in analyses]
+
+
+@portal_router.get("/{token}/analysis/{analysis_id}")
+async def portal_analysis(token: str, analysis_id: str):
+    p = await _resolve_portal(token)
+    return _sanitize_analysis(await _owned_analysis(p, analysis_id))
+
+
+async def _portal_pick(token: str, analysis_id: Optional[str]):
+    p = await _resolve_portal(token)
+    if not analysis_id:
+        docs = await _company_analyses(p["company_id"])
+        if not docs:
+            raise HTTPException(404, "Sem análises disponíveis")
+        return p, docs[0]
+    return p, await _owned_analysis(p, analysis_id)
+
+
+@portal_router.get("/{token}/panel")
+async def portal_panel(token: str, analysis_id: Optional[str] = None):
+    _, a = await _portal_pick(token, analysis_id)
+    return {"indicators": a.get("indicators"), "financials": a.get("financials"),
+            "meta": a.get("meta"), "period_label": a.get("period_label")}
+
+
+@portal_router.get("/{token}/dre")
+async def portal_dre(token: str, analysis_id: Optional[str] = None):
+    _, a = await _portal_pick(token, analysis_id)
+    return {"dre": (a.get("financials") or {}).get("dre"), "indicators": a.get("indicators")}
+
+
+@portal_router.get("/{token}/balance")
+async def portal_balance(token: str, analysis_id: Optional[str] = None):
+    _, a = await _portal_pick(token, analysis_id)
+    return {"balanco": (a.get("financials") or {}).get("balanco")}
+
+
+@portal_router.get("/{token}/diagnostic")
+async def portal_diagnostic(token: str, analysis_id: Optional[str] = None):
+    _, a = await _portal_pick(token, analysis_id)
+    return {"diagnosis": a.get("diagnosis")}

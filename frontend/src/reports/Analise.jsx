@@ -4,6 +4,7 @@ import { api, brl, statusLabel } from "@/reports/api";
 import {
   ArrowLeft, CheckCircle2, AlertTriangle, HelpCircle, Info, Sparkles, Loader2,
   FileDown, Presentation, Eye, EyeOff, Copy, Trash2, ChevronUp, ChevronDown, Save,
+  Share2, ExternalLink, RefreshCw, Ban, Link2, Check,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid,
@@ -12,7 +13,7 @@ import {
 const C = { teal: "#04B7AF", indigo: "#322F6A", amber: "#E8A13A", green: "#57B14A", red: "#D6453F", gray: "#9AA0B4" };
 const TABS = [
   ["validacao", "Validação"], ["painel", "Painel"], ["dre", "DRE"],
-  ["balanco", "Balanço"], ["diagnostico", "Diagnóstico"], ["editor", "Editor & Exportar"],
+  ["balanco", "Balanço"], ["folha", "Folha"], ["diagnostico", "Diagnóstico"], ["editor", "Editor & Exportar"],
 ];
 
 export default function Analise() {
@@ -24,6 +25,8 @@ export default function Analise() {
 
   if (!a) return <div className="rp-empty">Carregando análise…</div>;
   const meta = a.meta || {};
+  const hasFolha = !!(a.financials || {}).folha;
+  const tabs = TABS.filter(([k]) => k !== "folha" || hasFolha);
   return (
     <div data-testid="analise-page">
       <Link to="/" className="rp-back"><ArrowLeft size={16} /> Dashboard</Link>
@@ -32,11 +35,14 @@ export default function Analise() {
           <h1>{meta.client_name || a.client_name}</h1>
           <p>{a.period_label} · {a.cnpj || "CNPJ não informado"} · Responsável: {a.responsavel || "—"}</p>
         </div>
-        <span className={"rp-badge rp-badge-" + a.status}>{statusLabel[a.status] || a.status}</span>
+        <div className="rp-head-actions">
+          <SharePortal clientId={a.client_id} />
+          <span className={"rp-badge rp-badge-" + a.status}>{statusLabel[a.status] || a.status}</span>
+        </div>
       </div>
 
       <div className="rp-tabs">
-        {TABS.map(([k, l]) => (
+        {tabs.map(([k, l]) => (
           <button key={k} className={"rp-tab" + (tab === k ? " on" : "")} data-testid={`tab-${k}`} onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
@@ -45,6 +51,7 @@ export default function Analise() {
       {tab === "painel" && <Painel a={a} />}
       {tab === "dre" && <DRE a={a} />}
       {tab === "balanco" && <Balanco a={a} />}
+      {tab === "folha" && <Folha a={a} />}
       {tab === "diagnostico" && <Diagnostico a={a} reload={reload} />}
       {tab === "editor" && <Editor a={a} reload={reload} />}
     </div>
@@ -118,7 +125,7 @@ function KPI({ c }) {
   );
 }
 
-function Painel({ a }) {
+export function Painel({ a }) {
   const ind = a.indicators || {};
   const fin = a.financials || {};
   const cmp = ind.computed || {};
@@ -191,8 +198,56 @@ function Painel({ a }) {
   );
 }
 
-/* ---------------------------------------------------------------- DRE */
-function DRE({ a }) {
+/* ---------------------------------------------------------------- DRE + Waterfall */
+function wfSteps(dre) {
+  const g = (k) => (dre[k] == null ? null : Number(dre[k]));
+  let rob = g("receita_operacional_bruta"), ded = g("deducoes"), rol = g("receita_operacional_liquida");
+  let custos = g("custos"), lucro = g("lucro_bruto"), desp = g("despesas_operacionais");
+  let res = g("resultado_liquido"); if (res == null) res = g("resultado_operacional");
+  if (rol == null && rob != null && ded != null) rol = rob - Math.abs(ded);
+  if (lucro == null && rol != null && custos != null) lucro = rol - Math.abs(custos);
+  const seq = [
+    ["Receita Bruta", "total", rob], ["(–) Deduções", "delta", ded == null ? null : -Math.abs(ded)],
+    ["Receita Líquida", "total", rol], ["(–) Custos", "delta", custos == null ? null : -Math.abs(custos)],
+    ["Lucro Bruto", "total", lucro], ["(–) Despesas", "delta", desp == null ? null : -Math.abs(desp)],
+    ["Resultado", "total", res],
+  ];
+  let running = 0; const out = [];
+  for (const [label, kind, val] of seq) {
+    if (val == null) continue;
+    let b, t;
+    if (kind === "total") { b = 0; t = val; running = val; }
+    else { b = running; t = running + val; running = t; }
+    let color = C.teal;
+    if (kind === "total") { if (label.includes("Lucro")) color = C.green; else if (label.includes("Resultado")) color = val >= 0 ? C.green : C.red; }
+    else color = val >= 0 ? C.green : C.amber;
+    out.push({ name: label, range: [b, t], value: val, color });
+  }
+  return out;
+}
+
+function Waterfall({ dre }) {
+  const steps = wfSteps(dre);
+  if (steps.length < 2) return null;
+  return (
+    <div className="rp-card" data-testid="dre-waterfall">
+      <div className="rp-card-h"><h3>Formação do Resultado (Cascata)</h3></div>
+      <ResponsiveContainer width="100%" height={320}>
+        <BarChart data={steps} margin={{ top: 20, right: 10, left: 10, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#eef" />
+          <XAxis dataKey="name" tick={{ fontSize: 11, fontWeight: 700 }} />
+          <YAxis tickFormatter={(v) => (v / 1000).toFixed(0) + "k"} tick={{ fontSize: 11 }} />
+          <Tooltip formatter={(v, n, p) => brl(p.payload.value)} labelStyle={{ fontWeight: 700 }} />
+          <Bar dataKey="range" radius={[4, 4, 4, 4]}>
+            {steps.map((e, i) => <Cell key={i} fill={e.color} />)}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+export function DRE({ a }) {
   const dre = (a.financials || {}).dre;
   if (!dre) return <div className="rp-empty">Nenhuma DRE identificada nos documentos enviados.</div>;
   const rows = [
@@ -208,25 +263,85 @@ function DRE({ a }) {
     ["(=) Resultado Líquido", "resultado_liquido", true],
   ].filter(([, k]) => dre[k] != null);
   return (
-    <div className="rp-card" data-testid="painel-dre">
-      <div className="rp-card-h"><h3>DRE Gerencial — padrão FELCONT</h3></div>
-      <table className="rp-table">
-        <thead><tr><th>Conta</th><th className="r">Valor (R$)</th></tr></thead>
-        <tbody>
-          {rows.map(([lbl, k, hl]) => (
-            <tr key={k} className={hl ? "hl" : ""}>
-              <td>{lbl}</td>
-              <td className="r" style={{ color: dre[k] < 0 ? C.red : undefined }}>{brl(dre[k])}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div data-testid="painel-dre">
+      <Waterfall dre={dre} />
+      <div className="rp-card">
+        <div className="rp-card-h"><h3>DRE Gerencial — padrão FELCONT</h3></div>
+        <table className="rp-table">
+          <thead><tr><th>Conta</th><th className="r">Valor (R$)</th></tr></thead>
+          <tbody>
+            {rows.map(([lbl, k, hl]) => (
+              <tr key={k} className={hl ? "hl" : ""}>
+                <td>{lbl}</td>
+                <td className="r" style={{ color: dre[k] < 0 ? C.red : undefined }}>{brl(dre[k])}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------- Folha */
+export function Folha({ a }) {
+  const folha = (a.financials || {}).folha;
+  if (!folha) return <div className="rp-empty">Nenhuma folha de pagamento identificada.</div>;
+  const comp = [
+    { name: "Proventos", v: folha.proventos, c: C.indigo },
+    { name: "Encargos", v: folha.encargos, c: C.teal },
+    { name: "Benefícios", v: folha.beneficios, c: C.green },
+    { name: "Provisões", v: folha.provisoes, c: C.amber },
+  ].filter((x) => x.v != null).map((x) => ({ ...x, v: Number(x.v) }));
+  const mensal = (folha.mensal || []).map((m) => ({
+    name: m.mes, Proventos: Number(m.proventos || 0), Encargos: Number(m.encargos || 0),
+    Benefícios: Number(m.beneficios || 0), Provisões: Number(m.provisoes || 0),
+  }));
+  const kpis = [
+    ["Custo Total", folha.custo_total], ["Proventos", folha.proventos],
+    ["Encargos Sociais", folha.encargos], ["Colaboradores", folha.num_colaboradores],
+  ].filter(([, v]) => v != null);
+  return (
+    <div data-testid="painel-folha">
+      <div className="rp-kpis">
+        {kpis.map(([lab, v]) => (
+          <div className="rp-kpi" key={lab} style={{ borderTopColor: C.teal }}>
+            <div className="rp-kpi-lab">{lab}</div>
+            <div className="rp-kpi-val" style={{ color: C.indigo }}>{lab === "Colaboradores" ? Number(v) : brl(Number(v))}</div>
+          </div>
+        ))}
+      </div>
+      {comp.length > 0 && (
+        <div className="rp-card"><div className="rp-card-h"><h3>Composição da Folha</h3></div>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={comp}><CartesianGrid strokeDasharray="3 3" stroke="#eef" />
+              <XAxis dataKey="name" tick={{ fontSize: 12 }} /><YAxis tickFormatter={(v) => (v / 1000).toFixed(0) + "k"} tick={{ fontSize: 11 }} />
+              <Tooltip formatter={(v) => brl(v)} />
+              <Bar dataKey="v" radius={[6, 6, 0, 0]}>{comp.map((e, i) => <Cell key={i} fill={e.c} />)}</Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+      {mensal.length > 0 && (
+        <div className="rp-card"><div className="rp-card-h"><h3>Evolução Mensal da Folha</h3></div>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={mensal}><CartesianGrid strokeDasharray="3 3" stroke="#eef" />
+              <XAxis dataKey="name" tick={{ fontSize: 11 }} /><YAxis tickFormatter={(v) => (v / 1000).toFixed(0) + "k"} tick={{ fontSize: 11 }} />
+              <Tooltip formatter={(v) => brl(v)} />
+              <Bar dataKey="Proventos" stackId="f" fill={C.indigo} />
+              <Bar dataKey="Encargos" stackId="f" fill={C.teal} />
+              <Bar dataKey="Benefícios" stackId="f" fill={C.green} />
+              <Bar dataKey="Provisões" stackId="f" fill={C.amber} radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </div>
   );
 }
 
 /* ---------------------------------------------------------------- Balanço */
-function Balanco({ a }) {
+export function Balanco({ a }) {
   const bal = (a.financials || {}).balanco;
   if (!bal) return <div className="rp-empty">Nenhum Balanço Patrimonial identificado.</div>;
   const grp = (sec, title) => {
@@ -252,6 +367,37 @@ function Balanco({ a }) {
 }
 
 /* ---------------------------------------------------------------- Diagnóstico */
+export function DiagnosticoView({ diag }) {
+  const C2 = { teal: "#04B7AF", indigo: "#322F6A", amber: "#E8A13A", green: "#57B14A", red: "#D6453F" };
+  const tipoColor = (t) => t === "Risco" ? C2.red : t === "Ponto de Atenção" ? C2.amber : t === "Oportunidade" ? C2.teal : t === "Ponto Positivo" ? C2.green : C2.indigo;
+  if (!diag || (!diag.resumo_executivo && !(diag.diagnostico || []).length))
+    return <div className="rp-empty">Diagnóstico ainda não disponível para este período.</div>;
+  return (
+    <div data-testid="painel-diagnostico">
+      {diag.resumo_executivo && (
+        <div className="rp-card"><div className="rp-card-h"><h3>Resumo Executivo</h3></div><p className="rp-lead">{diag.resumo_executivo}</p></div>
+      )}
+      {(diag.diagnostico || []).length > 0 && (
+        <div className="rp-card"><div className="rp-card-h"><h3>Diagnóstico FELCONT</h3></div>
+          {(diag.diagnostico || []).map((d, i) => (
+            <div className="rp-diag" key={i} style={{ borderLeftColor: tipoColor(d.tipo) }}>
+              <span className="rp-diag-tag" style={{ color: tipoColor(d.tipo) }}>{d.tipo}</span>
+              <b>{d.titulo}</b><p>{d.texto}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      {(diag.recomendacoes || []).length > 0 && (
+        <div className="rp-card"><div className="rp-card-h"><h3>Recomendações Gerenciais</h3></div>
+          {(diag.recomendacoes || []).map((r, i) => (
+            <div className="rp-diag" key={i} style={{ borderLeftColor: C2.teal }}><b>{r.titulo}</b><p>{r.texto}</p></div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Diagnostico({ a, reload }) {
   const [busy, setBusy] = useState(false);
   const diag = a.diagnosis;
@@ -371,3 +517,72 @@ function Editor({ a, reload }) {
     </div>
   );
 }
+
+/* ---------------------------------------------------------------- Compartilhar com Cliente */
+function SharePortal({ clientId }) {
+  const [open, setOpen] = useState(false);
+  const [p, setP] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const fullUrl = p?.path ? `${window.location.origin}${p.path}` : "";
+  const load = useCallback(async () => {
+    if (!clientId) return;
+    const { data } = await api.get(`/clients/${clientId}/portal`); setP(data);
+  }, [clientId]);
+  useEffect(() => { if (open) load(); }, [open, load]);
+
+  const act = async (verb) => {
+    setBusy(true);
+    const url = verb === "create" ? `/clients/${clientId}/portal`
+      : `/clients/${clientId}/portal/${verb}`;
+    const { data } = await api.post(url);
+    setP(verb === "revoke" ? { exists: false, active: false } : data);
+    setBusy(false);
+  };
+  const copy = () => {
+    navigator.clipboard?.writeText(fullUrl);
+    setCopied(true); setTimeout(() => setCopied(false), 1500);
+  };
+  const fmt = (s) => s ? new Date(s).toLocaleString("pt-BR") : "—";
+
+  return (
+    <div className="rp-share">
+      <button className="rp-btn rp-btn-ghost" onClick={() => setOpen(!open)} data-testid="btn-share-portal">
+        <Share2 size={16} /> Compartilhar com Cliente
+      </button>
+      {open && (
+        <div className="rp-share-pop" data-testid="share-panel">
+          <div className="rp-share-h"><Link2 size={16} /> Portal do Cliente</div>
+          {(!p || !p.active) ? (
+            <>
+              <p className="rp-muted">Gere um link seguro e exclusivo para esta empresa. O cliente verá apenas os dados dela (Painel, DRE, Balanço, Diagnóstico).</p>
+              <button className="rp-btn rp-btn-primary" onClick={() => act("create")} disabled={busy} data-testid="btn-generate-link">
+                {busy ? <Loader2 className="rp-spin" size={16} /> : <Link2 size={16} />} Gerar link
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="rp-share-url" data-testid="portal-url">{fullUrl}</div>
+              <div className="rp-share-btns">
+                <button className="rp-btn rp-btn-primary sm" onClick={copy} data-testid="btn-copy-link">
+                  {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? "Copiado!" : "Copiar link"}
+                </button>
+                <a className="rp-btn rp-btn-ghost sm" href={fullUrl} target="_blank" rel="noreferrer" data-testid="btn-open-link"><ExternalLink size={14} /> Abrir</a>
+                <button className="rp-btn rp-btn-ghost sm" onClick={() => act("regenerate")} disabled={busy} data-testid="btn-regenerate-link"><RefreshCw size={14} /> Novo link</button>
+                <button className="rp-btn rp-btn-ghost sm rp-danger" onClick={() => act("revoke")} disabled={busy} data-testid="btn-revoke-link"><Ban size={14} /> Revogar</button>
+              </div>
+              <div className="rp-share-meta">
+                <div><span>Status</span><b style={{ color: "#2E7D32" }}>Ativo</b></div>
+                <div><span>Criado em</span><b>{fmt(p.created_at)}</b></div>
+                <div><span>Último acesso</span><b>{fmt(p.last_access_at)}</b></div>
+                <div><span>Acessos</span><b>{p.access_count ?? 0}</b></div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
