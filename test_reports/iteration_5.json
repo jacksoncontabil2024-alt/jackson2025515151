@@ -1,0 +1,20 @@
+{
+  "summary": "Iteration 5: Validated new admin auth (JWT HTTPOnly cookie) end-to-end. Backend 15/15 passed: /api/admin/login (cookie set), /me (200 with cookie, 401 without), /logout (clears cookie), wrong password -> 401 'Credenciais inválidas.', all /api/reports/* return 401 without cookie and 200 with cookie, portal remains public (invalid token -> 404, valid token GET /api/portal/{token} and /panel work sem cookie), docs disabled (openapi/docs/redoc -> 404). Frontend 8/8 passed: '/' and '/clientes' without session redirect to /login, wrong login shows login-error, correct login navigates to reports-shell, btn-logout logs out and revisiting '/' redirects to /login, /portal/{token} shows portal-page without login, /apresentacao-dre remains public deck-page.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/backend/tests/test_admin_auth.py", "/app/test_reports/pytest/admin_auth.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py: CORS_ORIGINS defaults to '*' with allow_credentials=True — invalid combo per CORS spec (browsers reject). Currently OK because frontend/backend are same-origin via ingress, but should be tightened (env explicitly listing preview origin).",
+    "auth.py: cookie set with secure=True, samesite='lax' — good for HTTPS preview. If ever tested on plain HTTP the cookie won't stick; documented for future.",
+    "auth.py seed_admin only refreshes password_hash when the current one no longer matches env pw; it does not reset 'active' or other fields — fine for now but note lockout logic (brute-force) mentioned in playbook is not implemented."
+  ],
+  "updated_files": ["/app/backend/tests/test_admin_auth.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "admin / admin (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None; used existing clients. Generated a portal token dynamically for a public-portal check.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Auth is fully working. Reusable regression tests: /app/backend/tests/test_admin_auth.py plus existing test_client_portal.py / test_felcont_reports.py / test_new_features.py (those still valid since portal remains public; reports tests may need cookie login if run — add fixture if needed). Playwright selectors used: [data-testid=login-page|login-identifier|login-password|login-submit|login-error|reports-shell|btn-logout|portal-page|deck-page].",
+  "rca of the issue": "N/A — no bugs found."
+}

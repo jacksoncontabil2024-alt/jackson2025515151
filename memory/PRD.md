@@ -70,3 +70,9 @@ padrão FELCONT (índigo #322F6A / turquesa #04B7AF). Regra crítica: NUNCA inve
 - **Excluir cliente**: DELETE /api/reports/clients/{id} (cascata: análises + portais) + botão na lista de Clientes (com confirmação).
 - **DRE em Cascata (waterfall)**, **Análise de Folha** (composição + evolução mensal), **Comparativos** entre períodos (com aviso de durações diferentes) e **Configurações** (upload de logo + cores aplicados na geração) — todos entregues e testados.
 - Testes: iteration_3 (waterfall/folha/compare/config) e iteration_4 (portal) — 100%.
+
+## Onda 4 (04/09) — Autenticação administrativa
+- Login obrigatório no sistema admin (JWT em cookie HTTPOnly `felcont_admin`, bcrypt). Usuário seed: admin/admin (env ADMIN_EMAIL/ADMIN_PASSWORD). Coleção `admin_users`.
+- Guarda central: '/' e todas as rotas admin exigem sessão → sem login redireciona para /login. Todas as APIs /api/reports/* exigem cookie (401 sem sessão). Portal (/api/portal/*, /portal/:token), deck (/api/deck/*, /apresentacao-dre) e /login permanecem PÚBLICOS. Docs da API desabilitados.
+- Frontend: AuthContext + Protected (guard) + tela /login (identidade FELCONT) + botão Sair no menu. Corrigido o bug de apagar /portal/TOKEN cair no dashboard.
+- Testes iteration_5: backend 15/15 + frontend 8/8 (100%). Nada existente quebrou.

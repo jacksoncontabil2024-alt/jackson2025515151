@@ -20,8 +20,8 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Create the main app without a prefix
-app = FastAPI()
+# Create the main app without a prefix (docs desabilitados por segurança)
+app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -129,10 +129,19 @@ async def deck_pdf():
 app.include_router(api_router)
 
 # FELCONT REPORTS AI
+from fastapi import Depends  # noqa: E402
+from felcont_reports.auth import admin_router, require_admin, seed_admin  # noqa: E402
 from felcont_reports.routes import router as reports_router  # noqa: E402
 from felcont_reports.routes import portal_router as portal_router  # noqa: E402
-app.include_router(reports_router)
-app.include_router(portal_router)
+
+app.include_router(admin_router)                                   # público (login)
+app.include_router(reports_router, dependencies=[Depends(require_admin)])  # protegido
+app.include_router(portal_router)                                  # público (token do cliente)
+
+
+@app.on_event("startup")
+async def _seed_admin_user():
+    await seed_admin()
 
 app.add_middleware(
     CORSMiddleware,

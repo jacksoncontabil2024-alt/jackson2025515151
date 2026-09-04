@@ -1,6 +1,7 @@
-import { NavLink, Outlet, Link } from "react-router-dom";
-import { LayoutDashboard, Users, FilePlus2, Settings, Presentation, Sparkles, GitCompare } from "lucide-react";
+import { NavLink, Outlet, Link, useNavigate } from "react-router-dom";
+import { LayoutDashboard, Users, FilePlus2, Settings, Presentation, Sparkles, GitCompare, LogOut } from "lucide-react";
 import { FELCONT_LOGO } from "@/reports/api";
+import { useAuth } from "@/reports/AuthContext";
 
 const items = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true, tid: "nav-dashboard" },
@@ -11,6 +12,9 @@ const items = [
 ];
 
 export default function Layout() {
+  const { user, logout } = useAuth();
+  const nav = useNavigate();
+  const doLogout = async () => { await logout(); nav("/login"); };
   return (
     <div className="rp-shell" data-testid="reports-shell">
       <aside className="rp-side">
@@ -37,9 +41,12 @@ export default function Layout() {
         <Link to="/apresentacao-dre" className="rp-side-link" data-testid="nav-apresentacao">
           <Presentation size={16} /> Apresentação DRE
         </Link>
+        <button className="rp-side-link rp-logout" onClick={doLogout} data-testid="btn-logout">
+          <LogOut size={16} /> Sair
+        </button>
         <div className="rp-side-foot">
-          FELCONT<br />
-          <span>Contabilidade · Finanças · Auditoria</span>
+          {user?.name || "FELCONT"}<br />
+          <span>{user?.email || "Contabilidade · Finanças · Auditoria"}</span>
         </div>
       </aside>
       <main className="rp-main">

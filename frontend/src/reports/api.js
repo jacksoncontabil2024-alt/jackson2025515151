@@ -1,7 +1,8 @@
 import axios from "axios";
 
-const BASE = `${process.env.REACT_APP_BACKEND_URL}/api/reports`;
-export const api = axios.create({ baseURL: BASE });
+const BACKEND = process.env.REACT_APP_BACKEND_URL;
+export const api = axios.create({ baseURL: `${BACKEND}/api/reports`, withCredentials: true });
+export const adminApi = axios.create({ baseURL: `${BACKEND}/api/admin`, withCredentials: true });
 
 export const brl = (n) =>
   n == null || isNaN(n)

@@ -21,6 +21,20 @@ body{margin:0;font-family:'Open Sans',system-ui,sans-serif;color:var(--ink);back
 .rp-side-link{margin-top:auto;display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.75);
   text-decoration:none;font-size:13px;padding:12px 14px;border:1px solid rgba(255,255,255,.15);border-radius:10px;transition:.15s;}
 .rp-side-link:hover{border-color:var(--teal);color:var(--teal);}
+.rp-logout{margin-top:8px;background:none;font-family:inherit;font-weight:600;}
+.rp-logout:hover{border-color:var(--red);color:var(--red);}
+/* LOGIN */
+.lg-shell{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(1000px 500px at 70% -10%,rgba(4,183,175,.18),transparent 60%),var(--indigo);padding:24px;}
+.lg-card{background:#fff;border-radius:18px;padding:38px 34px;width:100%;max-width:400px;
+  box-shadow:0 30px 80px rgba(0,0,0,.35);}
+.lg-logo{height:40px;}
+.lg-tag{display:inline-flex;align-items:center;gap:6px;color:var(--teal-dk);font-size:11.5px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;margin:16px 0 6px;}
+.lg-card h1{font-family:'Roboto';font-weight:900;font-size:26px;color:var(--indigo-deep);margin:0 0 18px;}
+.lg-card form{display:flex;flex-direction:column;gap:14px;}
+.lg-btn{justify-content:center;width:100%;margin-top:4px;}
+.lg-note{margin-top:18px;color:var(--muted);font-size:12.5px;text-align:center;}
 .rp-side-foot{margin-top:16px;font-size:11px;color:rgba(255,255,255,.5);line-height:1.5;font-weight:700;}
 .rp-side-foot span{font-weight:400;}
 .rp-main{flex:1;padding:34px 40px;max-width:1240px;}
