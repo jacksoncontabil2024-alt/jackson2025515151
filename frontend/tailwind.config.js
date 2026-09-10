@@ -52,6 +52,12 @@ module.exports = {
   				'3': 'hsl(var(--chart-3))',
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
+  			},
+  			brand: {
+  				terracota: 'hsl(var(--brand-terracota))',
+  				'terracota-dark': 'hsl(var(--brand-terracota-dark))',
+  				'terracota-light': 'hsl(var(--brand-terracota-light))',
+  				marrom: 'hsl(var(--brand-marrom))'
   			}
   		},
   		keyframes: {

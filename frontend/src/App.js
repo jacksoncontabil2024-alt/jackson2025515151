@@ -781,9 +781,9 @@ function MainApp() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-terracota-light to-orange-100">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-brand-marrom mx-auto"></div>
           <p className="mt-4 text-gray-600">Carregando...</p>
         </div>
       </div>
@@ -791,22 +791,26 @@ function MainApp() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-brand-terracota-light via-orange-50 to-brand-terracota-light">
       <Toaster position="top-right" />
       
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 shadow-2xl border-b border-blue-400">
+      <header className="bg-gradient-to-r from-brand-marrom via-brand-terracota-dark to-brand-marrom shadow-2xl border-b border-brand-terracota">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-white drop-shadow-lg">Cupim na telha</h1>
+            <div className="flex items-center gap-4">
+              <img src="/logo.png" alt="Cupim na Telha" className="h-16 md:h-20 w-auto drop-shadow-lg" />
+              <div>
+                <h1 className="text-3xl font-bold text-white drop-shadow-lg">Cupim na telha</h1>
+                <p className="text-sm text-white/70">Seu melhor lazer em família desde 2005</p>
+              </div>
             </div>
             <div className="flex gap-3">
               <Button onClick={handleClearAll} variant="destructive" className="bg-red-600 hover:bg-red-700 shadow-lg" data-testid="clear-all-btn">
                 <XCircle className="mr-2 h-4 w-4" />
                 Limpar Tudo
               </Button>
-              <Button onClick={handleExport} className="bg-white text-blue-600 hover:bg-blue-50 shadow-lg" data-testid="export-excel-btn">
+              <Button onClick={handleExport} className="bg-white text-brand-marrom hover:bg-brand-terracota-light shadow-lg" data-testid="export-excel-btn">
                 <Download className="mr-2 h-4 w-4" />
                 Exportar Excel
               </Button>
@@ -881,15 +885,15 @@ function MainApp() {
 
         {/* Main Tabs */}
         <Tabs defaultValue="cash" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-8 lg:w-auto bg-gradient-to-r from-blue-700 to-blue-600 shadow-lg">
-            <TabsTrigger value="cash" data-testid="tab-cash" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Caixa</TabsTrigger>
-            <TabsTrigger value="deliveries" data-testid="tab-deliveries" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Entregas</TabsTrigger>
-            <TabsTrigger value="summary" data-testid="tab-summary" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Resumo</TabsTrigger>
-            <TabsTrigger value="reports" data-testid="tab-reports" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Relatórios</TabsTrigger>
-            <TabsTrigger value="stock" data-testid="tab-stock" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Estoque</TabsTrigger>
-            <TabsTrigger value="deliverers" data-testid="tab-deliverers" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Entregadores</TabsTrigger>
-            <TabsTrigger value="employees" data-testid="tab-employees" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Funcionários</TabsTrigger>
-            <TabsTrigger value="backup" data-testid="tab-backup" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Backup</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-8 lg:w-auto bg-gradient-to-r from-brand-marrom to-brand-terracota-dark shadow-lg">
+            <TabsTrigger value="cash" data-testid="tab-cash" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-brand-marrom">Caixa</TabsTrigger>
+            <TabsTrigger value="deliveries" data-testid="tab-deliveries" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-brand-marrom">Entregas</TabsTrigger>
+            <TabsTrigger value="summary" data-testid="tab-summary" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-brand-marrom">Resumo</TabsTrigger>
+            <TabsTrigger value="reports" data-testid="tab-reports" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-brand-marrom">Relatórios</TabsTrigger>
+            <TabsTrigger value="stock" data-testid="tab-stock" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-brand-marrom">Estoque</TabsTrigger>
+            <TabsTrigger value="deliverers" data-testid="tab-deliverers" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-brand-marrom">Entregadores</TabsTrigger>
+            <TabsTrigger value="employees" data-testid="tab-employees" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-brand-marrom">Funcionários</TabsTrigger>
+            <TabsTrigger value="backup" data-testid="tab-backup" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-brand-marrom">Backup</TabsTrigger>
           </TabsList>
 
           {/* Deliveries Tab */}
@@ -1492,7 +1496,7 @@ function MainApp() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-2xl flex items-center gap-2">
-                      <BarChart3 className="h-6 w-6 text-blue-600" />
+                      <BarChart3 className="h-6 w-6 text-brand-marrom" />
                       Relatórios por Forma de Pagamento
                     </CardTitle>
                     <CardDescription>Análise detalhada de valores por método de pagamento</CardDescription>
@@ -2109,7 +2113,7 @@ function MainApp() {
                       />
                     </div>
                   </div>
-                  <Button type="submit" data-testid="add-stock-btn" className="bg-blue-600 hover:bg-blue-700 text-white">
+                  <Button type="submit" data-testid="add-stock-btn" className="bg-brand-marrom hover:bg-brand-terracota-dark text-white">
                     <Plus className="mr-2 h-4 w-4" />
                     Cadastrar Item
                   </Button>
@@ -2352,7 +2356,7 @@ function MainApp() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-2xl flex items-center gap-2">
-                  <Download className="h-6 w-6 text-blue-600" />
+                  <Download className="h-6 w-6 text-brand-marrom" />
                   Backup de Dados
                 </CardTitle>
                 <CardDescription>Gere um arquivo ZIP com Excel e PDFs de todos os dados da data selecionada</CardDescription>
@@ -2372,7 +2376,7 @@ function MainApp() {
                   <div>
                     <Button
                       data-testid="generate-backup-btn"
-                      className="bg-blue-600 hover:bg-blue-700 text-white w-full md:w-auto"
+                      className="bg-brand-marrom hover:bg-brand-terracota-dark text-white w-full md:w-auto"
                       onClick={async () => {
                         const dateInput = document.getElementById('backup-date');
                         const selectedDate = dateInput?.value;
@@ -2419,7 +2423,7 @@ function MainApp() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-2xl flex items-center gap-2">
-                  <HardDrive className="h-6 w-6 text-blue-600" />
+                  <HardDrive className="h-6 w-6 text-brand-marrom" />
                   Backups Automáticos
                 </CardTitle>
                 <CardDescription>Backups completos gerados automaticamente todos os dias (últimos 30 são mantidos)</CardDescription>
@@ -2427,7 +2431,7 @@ function MainApp() {
               <CardContent className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-lg p-4">
                   <div className="flex items-center gap-2 text-sm text-slate-700">
-                    <Clock className="h-4 w-4 text-blue-600" />
+                    <Clock className="h-4 w-4 text-brand-marrom" />
                     <span className="font-medium">Próximo backup automático:</span>
                     <span data-testid="next-backup-run">
                       {nextBackupRun
@@ -2504,7 +2508,7 @@ function MainApp() {
         <DialogContent className="sm:max-w-[900px] max-h-[80vh] bg-white">
           <DialogHeader>
             <DialogTitle className="text-2xl flex items-center gap-2">
-              <BarChart3 className="h-6 w-6 text-blue-600" />
+              <BarChart3 className="h-6 w-6 text-brand-marrom" />
               Detalhes - {reportDetailMethod === 'pix' ? 'PIX' : 
                          reportDetailMethod === 'cartao' ? 'Cartão' :
                          reportDetailMethod === 'dinheiro' ? 'Dinheiro' :
@@ -2638,7 +2642,7 @@ function MainApp() {
         <DialogContent className="sm:max-w-[400px] bg-white">
           <DialogHeader>
             <DialogTitle className="text-2xl flex items-center gap-2">
-              <Users className="h-6 w-6 text-blue-600" />
+              <Users className="h-6 w-6 text-brand-marrom" />
               Selecionar Entregador
             </DialogTitle>
             <DialogDescription>
@@ -2670,7 +2674,7 @@ function MainApp() {
             <div className="flex gap-3 pt-4">
               <Button 
                 onClick={handleConfirmDelivererSelection} 
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                className="flex-1 bg-brand-marrom hover:bg-brand-terracota-dark"
                 data-testid="confirm-deliverer-btn"
               >
                 Confirmar
@@ -2693,7 +2697,7 @@ function MainApp() {
         <DialogContent className="sm:max-w-[500px] bg-white">
           <DialogHeader>
             <DialogTitle className="text-2xl flex items-center gap-2">
-              <Edit className="h-6 w-6 text-blue-600" />
+              <Edit className="h-6 w-6 text-brand-marrom" />
               Editar Entrega #{editingDelivery?.seq}
             </DialogTitle>
             <DialogDescription>
@@ -2822,7 +2826,7 @@ function MainApp() {
                 </div>
               </div>
               <div className="flex gap-3 pt-4">
-                <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700" data-testid="save-edit-btn">
+                <Button type="submit" className="flex-1 bg-brand-marrom hover:bg-brand-terracota-dark" data-testid="save-edit-btn">
                   Salvar Alterações
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setEditingDelivery(null)} className="flex-1">
