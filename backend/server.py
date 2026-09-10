@@ -51,7 +51,13 @@ BACKUP_HOUR = int(os.environ.get('BACKUP_HOUR', '23'))
 BACKUP_MAX_FILES = 30
 
 # Paths that do not require authentication
-PUBLIC_PATHS = {"/api/auth/login", "/api/", ""}
+# Note: /api/ws is a WebSocket endpoint that authenticates itself via a
+# "token" query parameter (see websocket_endpoint below). The HTTP
+# AuthMiddleware runs before the WebSocket handshake and cannot see that
+# query-param token as a Bearer header, so it must be excluded here or
+# every WS connection attempt is rejected with 401 before reaching the
+# endpoint's own auth check.
+PUBLIC_PATHS = {"/api/auth/login", "/api/", "/api/ws", ""}
 
 security = HTTPBearer(auto_error=False)
 
