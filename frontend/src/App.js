@@ -803,13 +803,15 @@ function App() {
 
         {/* Main Tabs */}
         <Tabs defaultValue="cash" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-6 lg:w-auto bg-gradient-to-r from-blue-700 to-blue-600 shadow-lg">
+          <TabsList className="grid w-full grid-cols-8 lg:w-auto bg-gradient-to-r from-blue-700 to-blue-600 shadow-lg">
             <TabsTrigger value="cash" data-testid="tab-cash" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Caixa</TabsTrigger>
             <TabsTrigger value="deliveries" data-testid="tab-deliveries" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Entregas</TabsTrigger>
             <TabsTrigger value="summary" data-testid="tab-summary" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Resumo</TabsTrigger>
             <TabsTrigger value="reports" data-testid="tab-reports" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Relatórios</TabsTrigger>
             <TabsTrigger value="stock" data-testid="tab-stock" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Estoque</TabsTrigger>
             <TabsTrigger value="deliverers" data-testid="tab-deliverers" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Entregadores</TabsTrigger>
+            <TabsTrigger value="employees" data-testid="tab-employees" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Funcionários</TabsTrigger>
+            <TabsTrigger value="backup" data-testid="tab-backup" className="text-white/80 font-medium data-[state=active]:bg-white data-[state=active]:text-blue-600">Backup</TabsTrigger>
           </TabsList>
 
           {/* Deliveries Tab */}
