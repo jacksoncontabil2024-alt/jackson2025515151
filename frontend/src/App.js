@@ -13,92 +13,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
-import { Download, DollarSign, Package, Users, TrendingUp, TrendingDown, Clock, CheckCircle, XCircle, Trash2, Plus, Edit, BarChart3, CreditCard, Wallet, Smartphone, Printer, LogOut, Lock, User as UserIcon, RotateCcw, HardDrive } from "lucide-react";
+import { Download, DollarSign, Package, Users, TrendingUp, TrendingDown, Clock, CheckCircle, XCircle, Trash2, Plus, Edit, BarChart3, CreditCard, Wallet, Smartphone, Printer, User as UserIcon, RotateCcw, HardDrive } from "lucide-react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-// ==================== AUTH: AXIOS INTERCEPTORS ====================
-axios.interceptors.request.use((config) => {
-  const token = localStorage.getItem("authToken");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// ==================== LOGIN SCREEN ====================
-function LoginScreen({ onLoginSuccess }) {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    if (!username || !password) {
-      toast.error("Informe usuário e senha");
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await axios.post(`${API}/auth/login`, { username, password });
-      localStorage.setItem("authToken", res.data.access_token);
-      localStorage.setItem("authUser", JSON.stringify({ username: res.data.username, role: res.data.role }));
-      toast.success("Login realizado com sucesso!");
-      onLoginSuccess();
-    } catch (error) {
-      toast.error(error?.response?.data?.detail || "Usuário ou senha inválidos");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 px-4">
-      <Toaster position="top-right" />
-      <Card className="w-full max-w-md shadow-2xl border-0">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex items-center justify-center w-14 h-14 rounded-full bg-blue-600 text-white">
-            <Lock className="h-7 w-7" />
-          </div>
-          <CardTitle className="text-2xl font-bold">Cupim na telha</CardTitle>
-          <CardDescription>Faça login para acessar o sistema</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="login-username">Usuário</Label>
-              <Input
-                id="login-username"
-                data-testid="login-username-input"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="admin"
-                autoFocus
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="login-password">Senha</Label>
-              <Input
-                id="login-password"
-                data-testid="login-password-input"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-              />
-            </div>
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading} data-testid="login-submit-btn">
-              {loading ? "Entrando..." : "Entrar"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function MainApp({ onLogout }) {
+function MainApp() {
   const [cashEntries, setCashEntries] = useState([]);
   const [deliveries, setDeliveries] = useState([]);
   const [deliverers, setDeliverers] = useState([]);
@@ -294,8 +214,7 @@ function MainApp({ onLogout }) {
     
     isConnectingRef.current = true;
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const token = localStorage.getItem("authToken");
-    const wsUrl = `${wsProtocol}//${window.location.host}/api/ws?token=${encodeURIComponent(token || "")}`;
+    const wsUrl = `${wsProtocol}//${window.location.host}/api/ws`;
     
     try {
       const ws = new WebSocket(wsUrl);
@@ -890,10 +809,6 @@ function MainApp({ onLogout }) {
               <Button onClick={handleExport} className="bg-white text-blue-600 hover:bg-blue-50 shadow-lg" data-testid="export-excel-btn">
                 <Download className="mr-2 h-4 w-4" />
                 Exportar Excel
-              </Button>
-              <Button onClick={onLogout} variant="outline" className="bg-transparent border-white/60 text-white hover:bg-white/10 shadow-lg" data-testid="logout-btn">
-                <LogOut className="mr-2 h-4 w-4" />
-                Sair
               </Button>
             </div>
           </div>
@@ -2922,38 +2837,9 @@ function MainApp({ onLogout }) {
   );
 }
 
-// ==================== APP ROOT: AUTH GATE ====================
+// ==================== APP ROOT ====================
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem("authToken"));
-
-  useEffect(() => {
-    const interceptorId = axios.interceptors.response.use(
-      (response) => response,
-      (error) => {
-        if (error?.response?.status === 401) {
-          localStorage.removeItem("authToken");
-          localStorage.removeItem("authUser");
-          setIsAuthenticated(false);
-        }
-        return Promise.reject(error);
-      }
-    );
-    return () => {
-      axios.interceptors.response.eject(interceptorId);
-    };
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("authUser");
-    setIsAuthenticated(false);
-  };
-
-  if (!isAuthenticated) {
-    return <LoginScreen onLoginSuccess={() => setIsAuthenticated(true)} />;
-  }
-
-  return <MainApp onLogout={handleLogout} />;
+  return <MainApp />;
 }
 
 export default App;

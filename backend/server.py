@@ -50,15 +50,6 @@ BACKUP_DIR = Path(os.environ.get('BACKUP_DIR', '/data/backups'))
 BACKUP_HOUR = int(os.environ.get('BACKUP_HOUR', '23'))
 BACKUP_MAX_FILES = 30
 
-# Paths that do not require authentication
-# Note: /api/ws is a WebSocket endpoint that authenticates itself via a
-# "token" query parameter (see websocket_endpoint below). The HTTP
-# AuthMiddleware runs before the WebSocket handshake and cannot see that
-# query-param token as a Bearer header, so it must be excluded here or
-# every WS connection attempt is rejected with 401 before reaching the
-# endpoint's own auth check.
-PUBLIC_PATHS = {"/api/auth/login", "/api/", "/api/ws", ""}
-
 security = HTTPBearer(auto_error=False)
 
 
@@ -103,38 +94,6 @@ async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] =
     return user
 
 
-class AuthMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        path = request.url.path
-
-        if request.method == "OPTIONS" or path in PUBLIC_PATHS:
-            return await call_next(request)
-
-        if path.startswith("/api/"):
-            auth_header = request.headers.get("Authorization")
-            if not auth_header or not auth_header.startswith("Bearer "):
-                return _unauthorized_response("Not authenticated")
-
-            token = auth_header.split(" ", 1)[1]
-            try:
-                payload = decode_access_token(token)
-            except jwt.ExpiredSignatureError:
-                return _unauthorized_response("Token expirado")
-            except jwt.InvalidTokenError:
-                return _unauthorized_response("Token inválido")
-
-            user = await db.users.find_one({"username": payload.get("sub")}, {"_id": 0})
-            if not user:
-                return _unauthorized_response("Usuário não encontrado")
-
-        return await call_next(request)
-
-
-def _unauthorized_response(detail: str):
-    from starlette.responses import JSONResponse
-    return JSONResponse(status_code=401, content={"detail": detail})
-
-
 # Create the main app without a prefix
 app = FastAPI()
 
@@ -145,8 +104,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-app.add_middleware(AuthMiddleware)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -186,21 +143,6 @@ ws_manager = ConnectionManager()
 
 @app.websocket("/api/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    token = websocket.query_params.get("token")
-    if not token:
-        await websocket.close(code=4401)
-        return
-    try:
-        payload = decode_access_token(token)
-    except jwt.InvalidTokenError:
-        await websocket.close(code=4401)
-        return
-
-    user = await db.users.find_one({"username": payload.get("sub")}, {"_id": 0})
-    if not user:
-        await websocket.close(code=4401)
-        return
-
     await ws_manager.connect(websocket)
     try:
         while True:
@@ -395,7 +337,8 @@ async def login(credentials: LoginRequest):
     return LoginResponse(access_token=token, username=user["username"], role=user.get("role", "admin"))
 
 
-@api_router.get("/auth/me", response_model=UserPublic)
+# Rota inativa: login/autenticacao desabilitados (sistema de acesso livre).
+# Mantida no codigo caso a autenticacao precise ser reativada no futuro.
 async def get_me(current_user: dict = Depends(get_current_user)):
     return UserPublic(
         username=current_user["username"],
@@ -404,7 +347,7 @@ async def get_me(current_user: dict = Depends(get_current_user)):
     )
 
 
-@api_router.post("/auth/change-password")
+# Rota inativa: login/autenticacao desabilitados (sistema de acesso livre).
 async def change_password(request: ChangePasswordRequest, current_user: dict = Depends(get_current_user)):
     user = await db.users.find_one({"username": current_user["username"]})
     if not user or not verify_password(request.current_password, user["hashed_password"]):
