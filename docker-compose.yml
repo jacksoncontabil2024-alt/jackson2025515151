@@ -31,6 +31,10 @@ services:
       - DB_NAME=cupim_telha
       - CORS_ORIGINS=*
       - JWT_SECRET=${JWT_SECRET:-cupim-na-telha-dev-secret-change-me}
+      - BACKUP_DIR=/data/backups
+      - BACKUP_HOUR=${BACKUP_HOUR:-23}
+    volumes:
+      - ./backups:/data/backups
     networks:
       - cupim-network
 

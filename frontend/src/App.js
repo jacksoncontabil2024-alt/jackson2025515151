@@ -13,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
-import { Download, DollarSign, Package, Users, TrendingUp, TrendingDown, Clock, CheckCircle, XCircle, Trash2, Plus, Edit, BarChart3, CreditCard, Wallet, Smartphone, Printer, LogOut, Lock, User as UserIcon } from "lucide-react";
+import { Download, DollarSign, Package, Users, TrendingUp, TrendingDown, Clock, CheckCircle, XCircle, Trash2, Plus, Edit, BarChart3, CreditCard, Wallet, Smartphone, Printer, LogOut, Lock, User as UserIcon, RotateCcw, HardDrive } from "lucide-react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -142,6 +142,12 @@ function MainApp({ onLogout }) {
   // Reports detail modal state
   const [reportDetailMethod, setReportDetailMethod] = useState(null);
 
+  // Automatic backups state
+  const [backupsList, setBackupsList] = useState([]);
+  const [nextBackupRun, setNextBackupRun] = useState(null);
+  const [backupsLoading, setBackupsLoading] = useState(false);
+  const [restoringFilename, setRestoringFilename] = useState(null);
+
   // Cores para entregadores
   const DELIVERER_COLORS = [
     { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-300', hex: '#dc2626' },
@@ -189,6 +195,71 @@ function MainApp({ onLogout }) {
     loadData();
   }, []);
 
+  // ==================== AUTOMATIC BACKUPS ====================
+  const loadBackupsInfo = async () => {
+    setBackupsLoading(true);
+    try {
+      const [listRes, nextRunRes] = await Promise.all([
+        axios.get(`${API}/backups/list`),
+        axios.get(`${API}/backups/next-run`),
+      ]);
+      setBackupsList(listRes.data || []);
+      setNextBackupRun(nextRunRes.data?.next_run || null);
+    } catch (error) {
+      console.error("Error loading backups info:", error);
+    } finally {
+      setBackupsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadBackupsInfo();
+  }, []);
+
+  const handleDownloadBackupFile = async (filename) => {
+    try {
+      const response = await axios.get(`${API}/backups/download/${encodeURIComponent(filename)}`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Backup download error:", error);
+      toast.error("Erro ao baixar backup");
+    }
+  };
+
+  const handleRestoreBackupFile = async (filename) => {
+    if (!window.confirm(`ATENÇÃO! Restaurar "${filename}" vai APAGAR os dados atuais e substituí-los pelos dados deste backup.\n\nEsta ação não pode ser desfeita. Deseja continuar?`)) {
+      return;
+    }
+    if (!window.confirm("TEM CERTEZA? Confirme novamente para restaurar este backup.")) {
+      return;
+    }
+    setRestoringFilename(filename);
+    try {
+      await axios.post(`${API}/backups/restore/${encodeURIComponent(filename)}`);
+      toast.success("Backup restaurado com sucesso!");
+      await loadData();
+    } catch (error) {
+      console.error("Backup restore error:", error);
+      toast.error(error?.response?.data?.detail || "Erro ao restaurar backup");
+    } finally {
+      setRestoringFilename(null);
+    }
+  };
+
+  const formatBackupSize = (bytes) => {
+    if (!bytes) return "0 KB";
+    const kb = bytes / 1024;
+    if (kb < 1024) return `${kb.toFixed(1)} KB`;
+    return `${(kb / 1024).toFixed(2)} MB`;
+  };
+
   // ==================== WEBSOCKET - TEMPO REAL ====================
   const wsRef = useRef(null);
   const reconnectTimerRef = useRef(null);
@@ -213,6 +284,8 @@ function MainApp({ onLogout }) {
     employee_payment_created: "Pagamento de funcionário registrado",
     employee_payment_deleted: "Pagamento de funcionário removido",
     data_cleared: "Dados limpos",
+    backup_created: "Backup automático gerado",
+    data_restored: "Dados restaurados de um backup",
   };
 
   const connectWebSocket = useCallback(() => {
@@ -242,6 +315,9 @@ function MainApp({ onLogout }) {
           const label = EVENT_LABELS[data.event];
           if (label) {
             toast.info(label, { duration: 3000 });
+          }
+          if (data.event === "backup_created" || data.event === "data_restored") {
+            loadBackupsInfo();
           }
           loadData();
         } catch (e) {
@@ -2422,6 +2498,86 @@ function MainApp({ onLogout }) {
                     <li>PDF - Pagamentos de Funcionários</li>
                   </ul>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  <HardDrive className="h-6 w-6 text-blue-600" />
+                  Backups Automáticos
+                </CardTitle>
+                <CardDescription>Backups completos gerados automaticamente todos os dias (últimos 30 são mantidos)</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-sm text-slate-700">
+                    <Clock className="h-4 w-4 text-blue-600" />
+                    <span className="font-medium">Próximo backup automático:</span>
+                    <span data-testid="next-backup-run">
+                      {nextBackupRun
+                        ? new Date(nextBackupRun).toLocaleString('pt-BR')
+                        : "Carregando..."}
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    data-testid="refresh-backups-btn"
+                    onClick={loadBackupsInfo}
+                    disabled={backupsLoading}
+                  >
+                    <RotateCcw className={`mr-2 h-4 w-4 ${backupsLoading ? 'animate-spin' : ''}`} />
+                    Atualizar Lista
+                  </Button>
+                </div>
+
+                {backupsList.length === 0 ? (
+                  <p className="text-sm text-slate-500 text-center py-6">
+                    {backupsLoading ? "Carregando backups..." : "Nenhum backup automático encontrado ainda."}
+                  </p>
+                ) : (
+                  <ScrollArea className="h-[320px] pr-4">
+                    <div className="space-y-2">
+                      {backupsList.map((backup) => (
+                        <div
+                          key={backup.filename}
+                          data-testid="backup-list-item"
+                          className="flex flex-wrap items-center justify-between gap-3 border border-slate-200 rounded-lg p-3 hover:bg-slate-50"
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-medium text-sm text-slate-800 break-all">{backup.filename}</span>
+                            <span className="text-xs text-slate-500">
+                              {formatBackupSize(backup.size)} • {new Date(backup.created_at).toLocaleString('pt-BR')}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              data-testid="download-backup-btn"
+                              onClick={() => handleDownloadBackupFile(backup.filename)}
+                            >
+                              <Download className="mr-1.5 h-3.5 w-3.5" />
+                              Baixar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                              data-testid="restore-backup-btn"
+                              disabled={restoringFilename === backup.filename}
+                              onClick={() => handleRestoreBackupFile(backup.filename)}
+                            >
+                              <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                              {restoringFilename === backup.filename ? "Restaurando..." : "Restaurar"}
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

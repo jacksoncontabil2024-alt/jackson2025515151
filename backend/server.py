@@ -7,6 +7,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
+import asyncio
+import shutil
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
@@ -41,6 +43,12 @@ JWT_EXPIRATION_HOURS = 24
 
 DEFAULT_ADMIN_USERNAME = "admin"
 DEFAULT_ADMIN_PASSWORD = "admin123"
+
+# ==================== BACKUP CONFIG ====================
+
+BACKUP_DIR = Path(os.environ.get('BACKUP_DIR', '/data/backups'))
+BACKUP_HOUR = int(os.environ.get('BACKUP_HOUR', '23'))
+BACKUP_MAX_FILES = 30
 
 # Paths that do not require authentication
 PUBLIC_PATHS = {"/api/auth/login", "/api/", ""}
@@ -1151,9 +1159,12 @@ async def generate_backup(request: BackupRequest):
     )
 
 
-@api_router.post("/backup/full")
-async def generate_full_backup():
-    """Generate a full backup of ALL data (no date filter) - used before clearing data."""
+async def build_full_backup_zip_bytes() -> bytes:
+    """Build the full backup ZIP (Excel completo + PDF resumo) and return its bytes.
+
+    Reused by both the manual endpoint (/api/backup/full) and the automatic
+    daily backup scheduler.
+    """
     deliveries = await db.deliveries.find({}, {"_id": 0}).sort("seq", 1).to_list(100000)
     cash_entries = await db.cash_entries.find({}, {"_id": 0}).to_list(100000)
     employee_payments = await db.employee_payments.find({}, {"_id": 0}).to_list(100000)
@@ -1244,12 +1255,273 @@ async def generate_full_backup():
         zf.writestr(f"backup_completo_{today}.pdf", summary_buf.getvalue())
     
     zip_buffer.seek(0)
+    return zip_buffer.getvalue()
+
+
+@api_router.post("/backup/full")
+async def generate_full_backup():
+    """Generate a full backup of ALL data (no date filter) - used before clearing data."""
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    zip_bytes = await build_full_backup_zip_bytes()
     
     return StreamingResponse(
-        zip_buffer,
+        io.BytesIO(zip_bytes),
         media_type="application/zip",
         headers={"Content-Disposition": f"attachment; filename=backup_completo_{today}.zip"}
     )
+
+
+# ==================== AUTOMATIC BACKUP (SCHEDULER + MANAGEMENT) ====================
+
+def _ensure_backup_dir():
+    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _rotate_old_backups():
+    """Keep only the most recent BACKUP_MAX_FILES automatic backups (backup_*.zip)."""
+    try:
+        files = sorted(
+            BACKUP_DIR.glob("backup_*.zip"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        for old_file in files[BACKUP_MAX_FILES:]:
+            try:
+                old_file.unlink()
+                logger.info(f"Backup antigo removido: {old_file.name}")
+            except Exception as e:
+                logger.error(f"Erro ao remover backup antigo {old_file.name}: {e}")
+    except Exception as e:
+        logger.error(f"Erro ao rotacionar backups: {e}")
+
+
+async def run_automatic_backup():
+    """Generate an automatic backup ZIP and save it to BACKUP_DIR, then rotate old files."""
+    try:
+        _ensure_backup_dir()
+        zip_bytes = await build_full_backup_zip_bytes()
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
+        filename = f"backup_{timestamp}.zip"
+        filepath = BACKUP_DIR / filename
+        with open(filepath, "wb") as f:
+            f.write(zip_bytes)
+        _rotate_old_backups()
+        logger.info(f"Backup automático criado: {filename}")
+        await ws_manager.broadcast("backup_created", "backup", filename)
+        return filename
+    except Exception as e:
+        logger.error(f"Erro ao gerar backup automático: {e}")
+        return None
+
+
+def _seconds_until_next_backup() -> float:
+    now = datetime.now(timezone.utc)
+    target = now.replace(hour=BACKUP_HOUR, minute=0, second=0, microsecond=0)
+    if target <= now:
+        target += timedelta(days=1)
+    return (target - now).total_seconds()
+
+
+def get_next_backup_time() -> str:
+    now = datetime.now(timezone.utc)
+    target = now.replace(hour=BACKUP_HOUR, minute=0, second=0, microsecond=0)
+    if target <= now:
+        target += timedelta(days=1)
+    return target.isoformat()
+
+
+async def backup_scheduler_loop():
+    """Background loop that triggers an automatic backup once a day at BACKUP_HOUR (UTC)."""
+    while True:
+        wait_seconds = _seconds_until_next_backup()
+        logger.info(f"Próximo backup automático em {wait_seconds:.0f}s ({get_next_backup_time()})")
+        await asyncio.sleep(wait_seconds)
+        await run_automatic_backup()
+
+
+class BackupFileInfo(BaseModel):
+    filename: str
+    size: int
+    created_at: str
+
+
+@api_router.get("/backups/list", response_model=List[BackupFileInfo])
+async def list_backups():
+    """List all available backup files (automatic + manual saved to BACKUP_DIR)."""
+    _ensure_backup_dir()
+    files = []
+    for filepath in sorted(BACKUP_DIR.glob("*.zip"), key=lambda p: p.stat().st_mtime, reverse=True):
+        stat = filepath.stat()
+        files.append(BackupFileInfo(
+            filename=filepath.name,
+            size=stat.st_size,
+            created_at=datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat()
+        ))
+    return files
+
+
+@api_router.get("/backups/next-run")
+async def get_next_backup_run():
+    """Return the timestamp of the next scheduled automatic backup."""
+    return {"next_run": get_next_backup_time(), "backup_hour": BACKUP_HOUR}
+
+
+def _safe_backup_path(filename: str) -> Path:
+    # Prevent path traversal - only allow plain filenames within BACKUP_DIR
+    candidate = (BACKUP_DIR / filename).resolve()
+    if candidate.parent != BACKUP_DIR.resolve() or not candidate.name == filename:
+        raise HTTPException(status_code=400, detail="Nome de arquivo inválido")
+    return candidate
+
+
+@api_router.get("/backups/download/{filename}")
+async def download_backup(filename: str):
+    filepath = _safe_backup_path(filename)
+    if not filepath.exists() or not filepath.is_file():
+        raise HTTPException(status_code=404, detail="Backup não encontrado")
+
+    def iterfile():
+        with open(filepath, "rb") as f:
+            yield from f
+
+    return StreamingResponse(
+        iterfile(),
+        media_type="application/zip",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+@api_router.post("/backups/restore/{filename}")
+async def restore_backup(filename: str):
+    """Restore data from a backup ZIP (imports the Excel sheet back into MongoDB).
+
+    This REPLACES current collections (deliveries, cash_entries, employee_payments,
+    deliverers) with the contents found in the backup's Excel file.
+    """
+    filepath = _safe_backup_path(filename)
+    if not filepath.exists() or not filepath.is_file():
+        raise HTTPException(status_code=404, detail="Backup não encontrado")
+
+    from openpyxl import load_workbook
+
+    try:
+        with zipfile.ZipFile(filepath, 'r') as zf:
+            excel_name = next((n for n in zf.namelist() if n.endswith('.xlsx')), None)
+            if not excel_name:
+                raise HTTPException(status_code=400, detail="Backup inválido: Excel não encontrado no ZIP")
+            excel_bytes = zf.read(excel_name)
+    except zipfile.BadZipFile:
+        raise HTTPException(status_code=400, detail="Arquivo de backup corrompido")
+
+    wb = load_workbook(io.BytesIO(excel_bytes))
+
+    status_map = {
+        "Cancelado": {"cancelado": True, "foiEntregue": False, "saiuParaEntrega": False},
+        "Entregue": {"cancelado": False, "foiEntregue": True, "saiuParaEntrega": True},
+        "Em Entrega": {"cancelado": False, "foiEntregue": False, "saiuParaEntrega": True},
+        "Pendente": {"cancelado": False, "foiEntregue": False, "saiuParaEntrega": False},
+    }
+
+    # Deliverers (imported first so we can map names -> ids)
+    deliverers_docs = []
+    existing_deliverers = {}
+    if "Entregadores" in wb.sheetnames:
+        ws = wb["Entregadores"]
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            name = row[0] if row else None
+            if not name:
+                continue
+            deliverer = Deliverer(name=str(name))
+            deliverers_docs.append(deliverer.model_dump())
+            existing_deliverers[str(name)] = deliverer.id
+
+    # Deliveries
+    deliveries_docs = []
+    if "Entregas" in wb.sheetnames:
+        ws = wb["Entregas"]
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            if not row or row[0] is None:
+                continue
+            (seq, client_name, _valor_total, payment_method, amount, payment_method2, amount2,
+             valor_recebido, troco, observation, status, deliverer_name, dt, hora_saida, hora_entregue) = (
+                list(row) + [None] * (15 - len(row))
+            )[:15]
+
+            deliverer_id = existing_deliverers.get(deliverer_name) if deliverer_name and deliverer_name != "-" else None
+            status_flags = status_map.get(status, {"cancelado": False, "foiEntregue": False, "saiuParaEntrega": False})
+
+            delivery_data = {
+                "seq": int(seq) if seq is not None else 0,
+                "clientName": client_name or "",
+                "amount": float(amount) if amount not in (None, "-") else 0.0,
+                "paymentMethod": (payment_method or "").lower(),
+                "paymentMethod2": (payment_method2.lower() if payment_method2 and payment_method2 != "-" else None),
+                "amount2": (float(amount2) if amount2 not in (None, "-") else None),
+                "valorRecebido": (float(valor_recebido) if valor_recebido not in (None, "-") else None),
+                "troco": (float(troco) if troco not in (None, "-") else None),
+                "observation": (observation if observation and observation != "-" else None),
+                "datetime": dt or datetime.now(timezone.utc).isoformat(),
+                "horaSaida": (hora_saida if hora_saida and hora_saida != "-" else None),
+                "horaEntregue": (hora_entregue if hora_entregue and hora_entregue != "-" else None),
+                "delivererId": deliverer_id,
+                **status_flags,
+            }
+            deliveries_docs.append(Delivery(**delivery_data).model_dump())
+
+    # Cash entries
+    cash_docs = []
+    if "Caixa" in wb.sheetnames:
+        ws = wb["Caixa"]
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            if not row or row[0] is None:
+                continue
+            tipo, valor, desc, dt = (list(row) + [None] * (4 - len(row)))[:4]
+            cash_docs.append(CashEntry(
+                type=(tipo or "").lower(),
+                value=float(valor) if valor is not None else 0.0,
+                desc=desc or "",
+                datetime=dt or datetime.now(timezone.utc).isoformat(),
+            ).model_dump())
+
+    # Employee payments
+    employee_docs = []
+    if "Funcionarios" in wb.sheetnames:
+        ws = wb["Funcionarios"]
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            if not row or row[0] is None:
+                continue
+            nome, valor, pagamento, dt = (list(row) + [None] * (4 - len(row)))[:4]
+            employee_docs.append(EmployeePayment(
+                employeeName=nome or "",
+                amount=float(valor) if valor is not None else 0.0,
+                paymentMethod=(pagamento or "").lower(),
+                datetime=dt or datetime.now(timezone.utc).isoformat(),
+            ).model_dump())
+
+    # Replace current data with restored data
+    await db.deliveries.delete_many({})
+    await db.cash_entries.delete_many({})
+    await db.employee_payments.delete_many({})
+    await db.deliverers.delete_many({})
+
+    if deliverers_docs:
+        await db.deliverers.insert_many(deliverers_docs)
+    if deliveries_docs:
+        await db.deliveries.insert_many(deliveries_docs)
+    if cash_docs:
+        await db.cash_entries.insert_many(cash_docs)
+    if employee_docs:
+        await db.employee_payments.insert_many(employee_docs)
+
+    await ws_manager.broadcast("data_restored", "backup", filename)
+
+    return {
+        "message": "Backup restaurado com sucesso",
+        "deliveries": len(deliveries_docs),
+        "cash_entries": len(cash_docs),
+        "employee_payments": len(employee_docs),
+        "deliverers": len(deliverers_docs),
+    }
 
 
 # ==================== DATA MANAGEMENT ====================
@@ -1295,6 +1567,23 @@ async def create_default_admin():
         )
         await db.users.insert_one(default_user.model_dump())
         logger.info(f"Usuário admin padrão criado (username: {DEFAULT_ADMIN_USERNAME})")
+
+
+backup_scheduler_task = None
+
+
+@app.on_event("startup")
+async def start_backup_scheduler():
+    global backup_scheduler_task
+    _ensure_backup_dir()
+    backup_scheduler_task = asyncio.create_task(backup_scheduler_loop())
+    logger.info(f"Agendador de backup automático iniciado (BACKUP_HOUR={BACKUP_HOUR}, BACKUP_DIR={BACKUP_DIR})")
+
+
+@app.on_event("shutdown")
+async def stop_backup_scheduler():
+    if backup_scheduler_task:
+        backup_scheduler_task.cancel()
 
 
 @app.on_event("shutdown")
