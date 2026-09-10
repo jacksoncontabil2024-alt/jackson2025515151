@@ -113,6 +113,7 @@ NOTES = [
     'Agregar só o semelhante; desagregar o relevante; "outros" vira residual justificado. Exemplo: qual cliente tem "outras despesas" gorda? Será dos primeiros ajustes.',
     'Natureza, função ou mista — o mais útil. Função ganha dever extra: divulgar depreciação, amortização, benefícios a empregados, impairment e baixas de estoque. Exemplo: quanto de depreciação está no CPV precisará aparecer em nota.',
     'DFC indireta parte do lucro operacional. Fim da discricionariedade: juros/dividendos recebidos → investimento; pagos → financiamento. Exemplo: confirme se o Questor reparametrizará automaticamente.',
+    'Tesouraria: 1) rendimento de caixa e aplicações é Investimento — inclusive variação cambial do caixa; 2) variação cambial segue o item de origem (cliente em dólar → operacional; empréstimo em dólar → financiamento); 3) hedge segue o risco protegido — derivativo cobrindo duas categorias (“grossing up”) → operacional. Exemplo: depreciação do direito de uso é operacional na DRE, mas pagamento do arrendamento é financiamento na DFC.',
     'CPC 51 substitui CPC 26 (R1); NBC TG 51 (nov/2025); Res. CVM 237 revoga 106 e 156; Res. CVM 238 atualiza CPC 03, 06, 15 etc. DVA mantida (Lei 6.404/76). Alcance varia por entidade — validar cliente a cliente.',
     '"2027 parece longe, mas o comparativo de 2027 é 2026." Retrospectiva integral. Exemplo: para publicar o comparativo em março/2027, o de-para precisa rodar desde janeiro/2026.',
     '"Preciso mudar o plano de contas?" Não automaticamente — de-para resolve a maioria dos casos. Pode exigir desdobramentos ("outras despesas"). Depende do roadmap do Questor: chamado primeiro.',
@@ -158,7 +159,10 @@ def para(tf, text, size=12, color=GRAY, bold=False, font=FONT, first=False, alig
     f = r.font; f.size = Pt(size); f.color.rgb = color; f.bold = bold; f.name = font
     return p
 
-def header(s, kicker, title, n, total=21, sub=None):
+_slide_no = [0]
+
+def header(s, kicker, title, n=None, total=22, sub=None):
+    n = _slide_no[0]
     para(tb(s, Inches(0.55), Inches(0.32), Inches(9), Inches(0.3)), kicker.upper(), 10, CYAN, True, MONO, True)
     para(tb(s, Inches(0.55), Inches(0.62), Inches(11), Inches(0.8)), title, 28, WHITE, True, FONT, True)
     para(tb(s, Inches(12.2), Inches(0.35), Inches(0.9), Inches(0.3)), f"{n:02d} / {total}", 10, MUTED, False, MONO, True, PP_ALIGN.RIGHT)
@@ -170,10 +174,13 @@ def footer(s):
     para(tb(s, Inches(0.9), Inches(7.06), Inches(6), Inches(0.3)), "FELCONT · CPC 51 | IFRS 18", 8, MUTED, False, MONO, True)
     para(tb(s, Inches(8.3), Inches(7.06), Inches(4.5), Inches(0.3)), "MATERIAL INTERNO · 2026", 8, MUTED, False, MONO, True, PP_ALIGN.RIGHT)
 
+_slide_no = [0]
+
 def new_slide(note_idx):
+    _slide_no[0] += 1
     s = prs.slides.add_slide(BLANK)
     slide_bg(s)
-    s.notes_slide.notes_text_frame.text = NOTES[note_idx]
+    s.notes_slide.notes_text_frame.text = NOTES[_slide_no[0] - 1]
     return s
 
 def card(s, x, y, w, h, title, body, accent=CYAN, tsize=13, bsize=10.5):
@@ -206,9 +213,9 @@ s = new_slide(1)
 header(s, "Resumo executivo", "Quatro perguntas, respostas diretas", 2, sub="As dúvidas que todo cliente e toda equipe fazem — respondidas de antemão.")
 qa = [
     ("O que é?", "A IFRS 18 é a nova norma global de apresentação das demonstrações (IASB, abr/2024). O CPC 51 é a versão brasileira — NBC TG 51 (CFC) e Resolução CVM nº 237 — e substitui o CPC 26 (R1). É norma de apresentação: não muda mensuração nem o lucro.", "DETALHES · SLIDE 03"),
-    ("O que muda?", "DRE em 5 categorias, dois subtotais obrigatórios, MPMs reconciliadas em nota, fim das “outras despesas” genéricas e DFC reparametrizada. O lucro final não muda — a forma de apresentar, sim.", "SLIDES 04 A 12"),
-    ("Quando entra em vigor?", "Exercícios iniciados em ou após 01/01/2027, com aplicação retrospectiva: o comparativo de 2026 já sai no novo formato. Aplicação antecipada permitida. Preparação: 2026.", "LINHA DO TEMPO · SLIDE 14"),
-    ("Abrir chamado no Questor para o plano de contas?", "Sim — abra já. Mas não para trocar o plano de contas às cegas: o chamado levanta o roadmap do fornecedor e a parametrização de de-para (conta × categoria), sem quebrar o histórico. [Confirmar com o fornecedor]", "MODELO PRONTO · SLIDE 18"),
+    ("O que muda?", "DRE em 5 categorias, dois subtotais obrigatórios, MPMs reconciliadas em nota, fim das “outras despesas” genéricas e DFC reparametrizada. O lucro final não muda — a forma de apresentar, sim.", "SLIDES 04 A 13"),
+    ("Quando entra em vigor?", "Exercícios iniciados em ou após 01/01/2027, com aplicação retrospectiva: o comparativo de 2026 já sai no novo formato. Aplicação antecipada permitida. Preparação: 2026.", "LINHA DO TEMPO · SLIDE 15"),
+    ("Abrir chamado no Questor para o plano de contas?", "Sim — abra já. Mas não para trocar o plano de contas às cegas: o chamado levanta o roadmap do fornecedor e a parametrização de de-para (conta × categoria), sem quebrar o histórico. [Confirmar com o fornecedor]", "MODELO PRONTO · SLIDE 19"),
 ]
 pos = [(0.55, 1.95), (6.75, 1.95), (0.55, 4.55), (6.75, 4.55)]
 for (t, b, ref), (x, y) in zip(qa, pos):
@@ -443,7 +450,27 @@ para(tb(s, Inches(6.75), Inches(5.2), Inches(6), Inches(0.7)),
      "Antes: discricionário. Agora: regra única — reparametrização obrigatória no sistema.", 10, MUTED, False, FONT, True)
 footer(s)
 
-# ---------- 13 · BRASIL ----------
+# ---------- 13 · TESOURARIA ----------
+s = new_slide(12)
+header(s, "Tesouraria · classificação fina", "Juros, câmbio e hedge na nova DRE", sub="Onde a classificação mais pega na prática — regras do material oficial de efeitos da tesouraria.")
+tc = [
+    ("Caixa e aplicações financeiras", "Rendimentos de caixa e equivalentes → Investimento. Variação cambial do caixa em moeda também → Investimento (descasamento com dívida em moeda = Financiamento).", GREEN),
+    ("Variações cambiais", "Seguem a categoria do item de origem: contas a receber de clientes → Operacional; empréstimo em moeda estrangeira → Financiamento.", CYAN),
+    ("Hedge e derivativos", "Mesma categoria do risco protegido. Derivativo cobrindo riscos de duas categorias (“grossing up”) → Operacional.", BLUE),
+    ("Juros e arrendamentos", "Juros de empréstimos e arrendamentos (CPC 06) → Financiamento. Depreciação do direito de uso → Operacional: DRE e DFC podem divergir.", PURPLE),
+]
+for i, (t, d, c) in enumerate(tc):
+    x = 0.55 + (i % 2) * 6.2
+    y = 1.95 + (i // 2) * 1.8
+    box(s, Inches(x), Inches(y), Inches(6.0), Inches(1.65), line=c)
+    para(tb(s, Inches(x + 0.2), Inches(y + 0.12), Inches(5.6), Inches(0.4)), t, 13, c, True, FONT, True)
+    para(tb(s, Inches(x + 0.2), Inches(y + 0.55), Inches(5.6), Inches(1.0)), d, 10, GRAY, False, FONT, True)
+box(s, Inches(0.55), Inches(5.7), Inches(12.2), Inches(0.85), fill=NAVY, line=PURPLE)
+para(tb(s, Inches(0.8), Inches(5.85), Inches(11.8), Inches(0.6)),
+     "Serviços financeiros: bancos e seguradoras (atividade principal de financiar/investir) classificam juros e resultado de investimentos no Operacional — a receita líquida de juros de um banco é receita operacional.", 11, WHITE, False, FONT, True)
+footer(s)
+
+# ---------- 14 · BRASIL ----------
 s = new_slide(12)
 header(s, "Cenário regulatório", "Brasil — CPC 51 · NBC TG 51 · CVM 237", 13, sub="Não é “norma de fora”: já é norma brasileira, com cadeia completa de regulação.")
 marcos = [
@@ -488,13 +515,13 @@ footer(s)
 s = new_slide(14)
 header(s, "Sistemas · ERP Questor", "“Precisamos mudar o plano de contas?”", 15, sub="Resposta ponderada: não automaticamente. A norma exige classificação e apresentação — não necessariamente contas novas.")
 box(s, Inches(0.55), Inches(1.95), Inches(6.0), Inches(3.6), line=GREEN)
-para(tb(s, Inches(0.8), Inches(2.1), Inches(5.5), Inches(0.3)), "CAMINHO PROVÁVEL — SEM QUEBRAR HISTÓRICO", 9, GREEN, True, MONO, True)
+para(tb(s, Inches(0.8), Inches(2.1), Inches(5.5), Inches(0.3)), "O QUE JÁ EXISTE NO QUESTOR HOJE", 9, GREEN, True, MONO, True)
 para(tb(s, Inches(0.8), Inches(2.5), Inches(5.5), Inches(2.9)),
-     "— Tabela de de-para: conta existente × categoria CPC 51\n— Parametrização no Questor por conta ou centro de resultado\n— Relatórios DRE/DFC remontados a partir do de-para\n— Histórico e comparabilidade interna preservados", 11.5, GRAY, False, FONT, True)
+     "— Rotina “Optante pelo IFRS”: Operações › Contabilidade › Contabilidade Geral\n— Modelos de adoção: Normal (completa), PME e ITG, com histórico por período\n— “Controla Atividades” já gera a DRE por atividade, em colunas\n— Data de adoção é irreversível — exige exercício anterior fechado", 11, GRAY, False, FONT, True)
 box(s, Inches(6.75), Inches(1.95), Inches(6.0), Inches(3.6), line=AMBER)
-para(tb(s, Inches(7.0), Inches(2.1), Inches(5.5), Inches(0.3)), "QUANDO PODE EXIGIR CONTAS NOVAS", 9, AMBER, True, MONO, True)
+para(tb(s, Inches(7.0), Inches(2.1), Inches(5.5), Inches(0.3)), "O QUE AINDA PRECISAMOS CONFIRMAR", 9, AMBER, True, MONO, True)
 para(tb(s, Inches(7.0), Inches(2.5), Inches(5.5), Inches(2.9)),
-     "— Contas “guarda-chuva” (ex.: outras despesas genéricas) pedem desdobramento\n— Despesas por função exigem rateio de natureza rastreável\n— MPMs pedem campos/tags para reconciliação automática\n— Decisão final depende do roadmap do fornecedor", 11.5, GRAY, False, FONT, True)
+     "— As 5 categorias do CPC 51 nativas e o de-para conta × categoria\n— Subtotais obrigatórios automáticos na DRE\n— DFC reparametrizada (juros/dividendos) e MPMs com reconciliação\n— Comparativos de 2026 reexpressos e exportação do de-para", 11, GRAY, False, FONT, True)
 para(tb(s, Inches(0.55), Inches(5.9), Inches(12.2), Inches(0.5)),
      "Conduta Felcont: primeiro o chamado formal ao Questor, depois qualquer alteração de plano de contas — nunca antes. [Confirmar com o fornecedor]", 12, WHITE, True, FONT, True)
 footer(s)

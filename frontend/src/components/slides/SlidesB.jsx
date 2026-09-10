@@ -4,10 +4,10 @@ import { SlideShell } from "../SlideShell";
 import { Reveal, Selo, CatBadge, Card, Num, CATS } from "../bits";
 import { DRE_ROWS, DESAGREGACAO, fmtBRL } from "../../data/slidesContent";
 
-/* ---------------- 6 · LAFT ---------------- */
+/* ---------------- LAFT ---------------- */
 export function S6() {
   return (
-    <SlideShell n={6} total={20} kicker="Subtotal obrigatório nº 2" title={["Lucro antes de financiamento e tributos"]}
+    <SlideShell kicker="Subtotal obrigatório nº 2" title={["Lucro antes de financiamento e tributos"]}
       subtitle="Lucro operacional + resultado da categoria de investimento — o desempenho antes da estrutura de capital e dos tributos.">
       <div className="grid flex-1 grid-cols-2 gap-8 pt-2">
         <div className="flex flex-col justify-center gap-4">
@@ -54,10 +54,10 @@ export function S6() {
   );
 }
 
-/* ---------------- 7 · DRE FICTÍCIA ---------------- */
+/* ---------------- DRE FICTÍCIA ---------------- */
 export function S7() {
   return (
-    <SlideShell n={7} total={20} kicker="Slide-destaque · demonstração" title={["Exemplo de DRE no novo formato"]}
+    <SlideShell kicker="Slide-destaque · demonstração" title={["Exemplo de DRE no novo formato"]}
       right={<Selo tipo="ficticio" />}>
       <Reveal delay={0.3} className="flex-1">
         <div className="overflow-hidden rounded-xl hairline bg-[#0B101E]/90">
@@ -90,7 +90,7 @@ export function S7() {
   );
 }
 
-/* ---------------- 8 · MPMs ---------------- */
+/* ---------------- MPMs ---------------- */
 export function S8() {
   const regras = [
     ["Nota explicativa única", "Todas as MPMs concentradas em uma única nota das demonstrações."],
@@ -99,20 +99,26 @@ export function S8() {
     ["Por que a medida é útil", "Explicação da visão da administração e de mudanças de critério."],
   ];
   return (
-    <SlideShell n={8} total={20} kicker="Divulgação" title={["MPMs — medidas definidas pela administração"]}
+    <SlideShell kicker="Divulgação" title={["MPMs — medidas definidas pela administração"]}
       subtitle="EBITDA ajustado, lucro recorrente, resultado “sem efeitos não recorrentes”: a norma não proíbe — disciplina.">
       <div className="grid flex-1 grid-cols-[1fr_1.1fr] gap-8 pt-2">
         <Reveal delay={0.3} className="flex flex-col justify-center">
           <div className="rounded-xl hairline bg-[#0E1424]/80 p-5">
             <p className="font-mono2 text-[11px] uppercase tracking-[0.24em] text-[#64748B]">O que enquadra uma medida como MPM</p>
-            <ul className="mt-3 space-y-2.5 text-[13.5px] leading-relaxed text-[#CBD5E1]">
-              <li className="flex gap-2"><span className="text-[#00E5FF]">1.</span>Subtotal de receitas e despesas;</li>
-              <li className="flex gap-2"><span className="text-[#00E5FF]">2.</span>Usado em comunicação pública <span className="text-[#F8FAFC]">fora</span> das demonstrações (releases, apresentações);</li>
-              <li className="flex gap-2"><span className="text-[#00E5FF]">3.</span>Que transmite a visão da administração sobre o desempenho.</li>
+            <ul className="mt-3 space-y-2.5 text-[13px] leading-relaxed text-[#CBD5E1]">
+              <li className="flex gap-2"><span className="text-[#00E5FF]">1.</span><span>Subtotal de receitas e despesas;</span></li>
+              <li className="flex gap-2"><span className="text-[#00E5FF]">2.</span><span>Usado em comunicação pública <span className="text-[#F8FAFC]">fora</span> das demonstrações (releases, apresentações);</span></li>
+              <li className="flex gap-2"><span className="text-[#00E5FF]">3.</span><span>Que transmite a visão da administração sobre o desempenho.</span></li>
             </ul>
-            <p className="mt-4 rounded-lg border border-[rgba(56,189,248,0.3)] bg-[rgba(56,189,248,0.07)] px-4 py-2.5 text-[12.5px] text-[#CBD5E1]">
-              Exemplo clássico: <span className="text-[#38BDF8] font-semibold">“EBITDA ajustado”</span> do release de resultados.
-            </p>
+            <div className="mt-4 rounded-lg border border-[rgba(56,189,248,0.3)] bg-[rgba(56,189,248,0.07)] px-4 py-3">
+              <p className="font-mono2 text-[9.5px] uppercase tracking-[0.18em] text-[#38BDF8]">Exemplo ilustrativo oficial IASB · € mil</p>
+              <div className="mt-2 space-y-1 text-[11.5px]">
+                <div className="flex justify-between gap-3"><span className="text-[#CBD5E1]">“Lucro do negócio principal” (MPM)</span><Num className="text-[#F8FAFC]">45.844</Num></div>
+                <div className="flex justify-between gap-3"><span className="text-[#94A3B8]">(−) Coligadas/JVs integrais (MEP)</span><Num className="text-[#94A3B8]">(257)</Num></div>
+                <div className="flex justify-between gap-3 border-t border-white/10 pt-1"><span className="font-semibold text-[#F8FAFC]">= Lucro bruto (subtotal IFRS)</span><Num className="font-bold text-[#00E5FF]">45.588</Num></div>
+                <p className="pt-1 text-[10px] text-[#64748B]">Comparativo reexpresso 2024: 45.644 → 45.296 · com explicação escrita da visão da administração.</p>
+              </div>
+            </div>
           </div>
         </Reveal>
         <div className="flex flex-col justify-center gap-3">
@@ -133,11 +139,11 @@ export function S8() {
   );
 }
 
-/* ---------------- 9 · AGREGAÇÃO ---------------- */
+/* ---------------- AGREGAÇÃO ---------------- */
 export function S9() {
   const total = DESAGREGACAO.depois.reduce((a, b) => a + b.valor, 0);
   return (
-    <SlideShell n={9} total={20} kicker="Transparência" title={["Agregação e desagregação"]}
+    <SlideShell kicker="Transparência" title={["Agregação e desagregação"]}
       subtitle="Agregar só o que é semelhante; desagregar o que é relevante. “Outros” vira residual — e precisa se justificar."
       right={<Selo tipo="ficticio" />}>
       <div className="grid flex-1 grid-cols-[1fr_auto_1.4fr] items-center gap-6 pt-2">
@@ -184,10 +190,10 @@ export function S9() {
   );
 }
 
-/* ---------------- 10 · NATUREZA × FUNÇÃO ---------------- */
+/* ---------------- NATUREZA × FUNÇÃO ---------------- */
 export function S10() {
   return (
-    <SlideShell n={10} total={20} kicker="Despesas operacionais" title={["Natureza × função × combinação"]}
+    <SlideShell kicker="Despesas operacionais" title={["Natureza × função × combinação"]}
       subtitle="Na categoria operacional, as despesas seguem o critério mais útil aos usuários — com um dever extra para quem escolher função.">
       <div className="grid flex-1 grid-cols-3 gap-5 pt-2">
         <Reveal delay={0.3}>
@@ -232,6 +238,15 @@ export function S10() {
           </Card>
         </Reveal>
       </div>
+      <Reveal delay={0.8}>
+        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1 rounded-xl hairline bg-[#0E1424]/70 px-5 py-3">
+          <span className="font-mono2 text-[9.5px] uppercase tracking-[0.18em] text-[#64748B]">Exemplo ilustrativo oficial IASB · nota por natureza (€ mil)</span>
+          <span className="text-[11.5px] text-[#CBD5E1]">
+            Depreciação alocada por função →{" "}
+            <Num className="text-[#F8FAFC]">CPV 5.322 · Serviços 1.664 · Vendas 1.890 · Adm 1.188 · P&amp;D 310</Num>
+          </span>
+        </div>
+      </Reveal>
     </SlideShell>
   );
 }

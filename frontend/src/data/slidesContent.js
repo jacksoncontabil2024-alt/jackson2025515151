@@ -1,7 +1,7 @@
 // Conteúdo validado em fontes oficiais: IASB (IFRS 18, abr/2024), CFC (NBC TG 51, 13/11/2025),
 // CVM (Resolução CVM nº 237/2025). Valores monetários são fictícios e didáticos.
 
-export const TOTAL_SLIDES = 21;
+export const TOTAL_SLIDES = 22;
 
 export const SLIDE_TITLES = [
   "Capa — CPC 51 | IFRS 18",
@@ -16,6 +16,7 @@ export const SLIDE_TITLES = [
   "Agregação e desagregação",
   "Natureza × função × combinação",
   "Impactos na DFC",
+  "Tesouraria: juros, câmbio e hedge na DRE",
   "Brasil — CPC 51 / NBC TG 51 / CVM 237",
   "Vigência e transição",
   "Questor — precisamos mudar o plano de contas?",
@@ -64,15 +65,18 @@ Exemplo prático: indústria que apresenta por função terá de abrir em nota q
   // 12 — DFC
   `A DFC pelo método indireto muda o ponto de partida: sai o "lucro antes dos tributos" e entra o LUCRO OPERACIONAL como base — eliminando ajustes que hoje misturam tudo. E acaba a discricionariedade de classificação de juros e dividendos para a maioria das empresas: juros e dividendos recebidos → atividades de investimento; juros pagos → financiamento; dividendos pagos → financiamento. Entidades com atividade principal financeira seguem regra própria.
 Exemplo prático: cliente que hoje coloca juros recebidos no operacional da DFC terá a linha reparametrizada — confira se o Questor fará isso automaticamente.`,
-  // 13 — Brasil
+  // 13 — Tesouraria (base: IFRS 18 — Efeitos da Tesouraria na DRE)
+  `Tesouraria é onde a classificação mais pega na prática. Três regras para memorizar: 1) rendimento de caixa e aplicações é Investimento — inclusive a variação cambial do caixa em moeda estrangeira; 2) variação cambial segue a categoria do item de origem (cliente em dólar → operacional; empréstimo em dólar → financiamento); 3) hedge segue o risco protegido — e se um derivativo cobre riscos de duas categorias ao mesmo tempo, a regra do "grossing up" joga o resultado no operacional.
+Exemplo prático: indústria exportadora com hedge de receita e de juros no mesmo instrumento terá o resultado do derivativo no operacional. E atenção ao descasamento clássico: a depreciação do direito de uso (CPC 06) é operacional na DRE, mas o pagamento do arrendamento é financiamento na DFC — as duas demonstrações podem divergir.`,
+  // 14 — Brasil
   `Aterrisse a norma no Brasil: o CPC 51 substitui o CPC 26 (R1); o CFC publicou a NBC TG 51 em novembro de 2025; a CVM aprovou a Resolução nº 237 (que revoga as Resoluções 106 e 156) e a Resolução nº 238 atualizou diversos outros pronunciamentos (CPC 03, 06, 15, entre outros) para manter a coerência. A DVA continua exigida pela Lei 6.404/76 para companhias abertas. O alcance da obrigatoriedade varia por tipo de entidade (companhia aberta, instituição autorizada pelo Bacen, entidade que adota CPCs integrais) — por isso o selo "confirmar na fonte" para cada cliente.
 Exemplo prático: uma Ltda. que segue apenas o regime tributário simplificado pode não estar no alcance pleno — valide cliente a cliente antes de prometer adequação.`,
   // 14 — Vigência
   `Mensagem central: "2027 parece longe, mas o comparativo de 2027 é 2026." A norma vale para exercícios iniciados em ou após 1º de janeiro de 2027, com aplicação antecipada permitida e aplicação RETROSPECTIVA integral — ou seja, a DRE de 2026 publicada como comparativo já terá de estar no novo formato. Quem esperar janeiro de 2027 vai reconstruir 2026 às pressas.
 Exemplo prático: para entregar o comparativo reexpresso em março de 2027, o plano de contas e o de-para precisam estar rodando desde janeiro de 2026.`,
   // 15 — Questor
-  `Pergunta que todo cliente fará: "preciso mudar meu plano de contas?" Resposta ponderada: NÃO automaticamente. O que o CPC 51 exige é classificação e apresentação — muitas vezes resolvida com tabela de de-para entre contas existentes e as 5 categorias, sem quebrar histórico. Mas pode haver necessidade de desdobrar contas (ex.: "outras despesas" genéricas). Tudo depende do roadmap do Questor — por isso o selo de confirmar com o fornecedor.
-Exemplo prático: antes de criar 200 contas novas, abra o chamado do slide 18 e pergunte ao suporte como o sistema vai parametrizar as categorias.`,
+  `Pergunta que todo cliente fará: "preciso mudar meu plano de contas?" Resposta ponderada: NÃO automaticamente. E agora temos o manual do Questor em mãos: a rotina "Optante pelo IFRS" já existe (Operações > Contabilidade > Contabilidade Geral), com modelos Normal, PME e ITG, DRE por atividade via "Controla Atividades" e data de adoção irreversível — ou seja, o sistema já tem a espinha dorsal do IFRS. O que NÃO consta no manual: as 5 categorias do CPC 51, os subtotais obrigatórios e a DFC reparametrizada. É exatamente isso que o chamado precisa perguntar.
+Exemplo prático: mostre o caminho da rotina na tela e alerte — a data de adoção não pode ser desfeita; quem marcar 01/01/2026 sem preparo não volta atrás.`,
   // 16 — Mapeamento
   `Mostre a tabela como um recorte do que cada cliente vai precisar: conta, descrição, categoria CPC 51, relatório afetado e ação. Reforce que é um EXEMPLO fictício — o de-para real sai do plano de contas de cada cliente. Note que contas de rendimento financeiro, equivalência e juros mudam de categoria mesmo sem mudar de número.
 Exemplo prático: a conta de rendimentos de aplicações continua a mesma no plano, mas deixa de aparecer "antes" do operacional e passa à categoria Investimento.`,
@@ -135,7 +139,7 @@ export const MAP_ROWS = [
 ];
 
 export const QUESTOR_QUESTIONS = [
-  "O Questor terá parametrização nativa das 5 categorias do CPC 51 (operacional, investimento, financiamento, impostos, descontinuadas)? Qual o roadmap e o prazo de entrega?",
+  "A rotina 'Optante pelo IFRS' (Operações › Contabilidade › Contabilidade Geral) ganhará as 5 categorias do CPC 51 (operacional, investimento, financiamento, impostos, descontinuadas)? Qual o roadmap e o prazo?",
   "A classificação será por conta contábil, por centro de resultado/custo ou por lançamento?",
   "A DRE do sistema passará a exibir automaticamente os subtotais obrigatórios: lucro operacional e lucro antes de financiamento e tributos?",
   "Como o sistema tratará as MPMs/MPDAs — haverá campos para reconciliação e divulgação em nota explicativa?",
@@ -152,7 +156,7 @@ Somos responsáveis pela contabilidade da empresa [RAZÃO SOCIAL], CNPJ [00.000.
 
 Solicitamos, por escrito, as seguintes informações:
 
-1. Roadmap e prazo para parametrização das 5 categorias da DRE (operacional, investimento, financiamento, impostos sobre a renda e operações descontinuadas);
+1. A rotina "Optante pelo IFRS" (Operações > Contabilidade > Contabilidade Geral) ganhará as 5 categorias da DRE do CPC 51 (operacional, investimento, financiamento, impostos sobre a renda e operações descontinuadas)? Qual o roadmap e o prazo;
 2. Forma de classificação prevista: por conta contábil, centro de resultado ou lançamento;
 3. Previsão de geração automática dos subtotais obrigatórios (lucro operacional; lucro antes de financiamento e tributos);
 4. Tratamento das MPMs/MPDAs e respectivas reconciliações em nota explicativa;

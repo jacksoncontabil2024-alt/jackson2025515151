@@ -80,3 +80,11 @@ memory/test_credentials.md
 
 # Mobile development
 android-sdk/
+.env
+.env.*
+*.env
+credentials.json
+*.key
+.credentials
+.pw-browsers/chromium_headless_shell-1234/chrome-linux/headless_shell
+.pw-browsers/chromium-1234/chrome-linux/chrome

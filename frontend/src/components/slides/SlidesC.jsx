@@ -1,19 +1,19 @@
 import React from "react";
-import { ArrowRight, Waves, Flag, CalendarClock, Wrench } from "lucide-react";
+import { ArrowRight, Waves, Flag, CalendarClock, Wrench, Wallet, ArrowLeftRight, ShieldCheck, Percent, Building2 } from "lucide-react";
 import { SlideShell } from "../SlideShell";
 import { Reveal, Selo, CatBadge, Card } from "../bits";
 import { MAP_ROWS } from "../../data/slidesContent";
 
-/* ---------------- 11 · DFC ---------------- */
+/* ---------------- DFC ---------------- */
 export function S11() {
   const regras = [
-    ["Juros recebidos", "Investimento", "investimento"],
-    ["Dividendos recebidos", "Investimento", "investimento"],
-    ["Juros pagos", "Financiamento", "financiamento"],
-    ["Dividendos pagos", "Financiamento", "financiamento"],
+    ["Juros recebidos", "investimento"],
+    ["Dividendos recebidos", "investimento"],
+    ["Juros pagos", "financiamento"],
+    ["Dividendos pagos", "financiamento"],
   ];
   return (
-    <SlideShell n={11} total={20} kicker="Demonstração dos fluxos de caixa" title={["Impactos na DFC"]}
+    <SlideShell kicker="Demonstração dos fluxos de caixa" title={["Impactos na DFC"]}
       subtitle="O método indireto ganha novo ponto de partida — e acaba a liberdade de classificar juros e dividendos.">
       <div className="grid flex-1 grid-cols-[1fr_1.15fr] gap-8 pt-2">
         <div className="flex flex-col justify-center gap-4">
@@ -47,7 +47,7 @@ export function S11() {
                 </tr>
               </thead>
               <tbody>
-                {regras.map(([t, d, cat], i) => (
+                {regras.map(([t, cat], i) => (
                   <tr key={i} className="border-t border-white/5 transition-colors hover:bg-white/[0.03]">
                     <td className="px-5 py-3.5 text-[13.5px] text-[#CBD5E1]">{t}</td>
                     <td className="px-5 py-3.5"><CatBadge cat={cat} /></td>
@@ -65,7 +65,73 @@ export function S11() {
   );
 }
 
-/* ---------------- 12 · BRASIL ---------------- */
+/* ---------------- TESOURARIA (novo — base: IFRS 18 Efeitos da Tesouraria na DRE) ---------------- */
+export function S12B() {
+  const cards = [
+    {
+      icon: Wallet,
+      color: "#10B981",
+      t: "Caixa e aplicações financeiras",
+      d: "Rendimentos de caixa e equivalentes → Investimento. A variação cambial do caixa em moeda estrangeira também vai para Investimento — atenção ao descasamento com a dívida em moeda, que é Financiamento.",
+      badge: "investimento",
+    },
+    {
+      icon: ArrowLeftRight,
+      color: "#00E5FF",
+      t: "Variações cambiais",
+      d: "Seguem a categoria do item de origem: contas a receber de clientes em dólar → Operacional; empréstimo em moeda estrangeira → Financiamento.",
+      badge: null,
+    },
+    {
+      icon: ShieldCheck,
+      color: "#38BDF8",
+      t: "Hedge e derivativos",
+      d: "Mesma categoria do risco protegido. Se um único derivativo cobre riscos de categorias diferentes (ex.: receita + juros), a regra do “grossing up” joga o resultado no Operacional.",
+      badge: null,
+    },
+    {
+      icon: Percent,
+      color: "#8B5CF6",
+      t: "Juros e arrendamentos",
+      d: "Juros de empréstimos e de arrendamentos (CPC 06) → Financiamento. Mas a depreciação do direito de uso fica no Operacional — DRE e DFC podem divergir.",
+      badge: "financiamento",
+    },
+  ];
+  return (
+    <SlideShell kicker="Tesouraria · classificação fina" title={["Juros, câmbio e hedge na nova DRE"]}
+      subtitle="Onde a classificação mais pega na prática — regras extraídas do material oficial de efeitos da tesouraria na IFRS 18.">
+      <div className="grid flex-1 grid-cols-2 grid-rows-2 gap-3.5 pt-1">
+        {cards.map((c, i) => (
+          <Reveal key={c.t} delay={0.25 + i * 0.09} className="h-full">
+            <div className="flex h-full flex-col rounded-xl hairline bg-[#0E1424]/80 p-4 transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(0,229,255,0.3)]">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg border" style={{ borderColor: `${c.color}55`, background: `${c.color}14` }}>
+                    <c.icon size={15} style={{ color: c.color }} />
+                  </span>
+                  <h3 className="font-display text-[13.5px] font-bold text-[#F8FAFC]">{c.t}</h3>
+                </div>
+                {c.badge && <CatBadge cat={c.badge} short />}
+              </div>
+              <p className="mt-2.5 text-[11.5px] leading-relaxed text-[#94A3B8]">{c.d}</p>
+            </div>
+          </Reveal>
+        ))}
+      </div>
+      <Reveal delay={0.75}>
+        <div className="mt-3.5 flex items-center gap-3 rounded-xl border border-[rgba(139,92,246,0.35)] bg-[rgba(139,92,246,0.07)] px-5 py-3">
+          <Building2 size={16} className="shrink-0 text-[#8B5CF6]" />
+          <p className="text-[12px] leading-snug text-[#CBD5E1]">
+            <span className="font-semibold text-[#F8FAFC]">Serviços financeiros:</span> bancos e seguradoras (atividade principal de financiar/investir) classificam juros e resultado de investimentos no{" "}
+            <span className="text-[#00E5FF]">Operacional</span> — ex.: a receita líquida de juros de um banco é receita operacional.
+          </p>
+        </div>
+      </Reveal>
+    </SlideShell>
+  );
+}
+
+/* ---------------- BRASIL ---------------- */
 export function S12() {
   const marcos = [
     { org: "CPC", doc: "CPC 51", d: "Pronunciamento técnico que substitui o CPC 26 (R1) — Apresentação das Demonstrações Contábeis." },
@@ -74,7 +140,7 @@ export function S12() {
     { org: "CVM", doc: "Resolução nº 238", d: "Torna obrigatório o Documento de Revisão nº 28, atualizando CPC 03, 06, 15 e outros em coerência." },
   ];
   return (
-    <SlideShell n={12} total={20} kicker="Cenário regulatório" title={["Brasil — CPC 51 · NBC TG 51 · CVM 237"]}
+    <SlideShell kicker="Cenário regulatório" title={["Brasil — CPC 51 · NBC TG 51 · CVM 237"]}
       subtitle="Não é “norma de fora”: já é norma brasileira, com cadeia completa de regulação.">
       <div className="grid flex-1 grid-cols-2 gap-4 pt-2">
         {marcos.map((m, i) => (
@@ -92,31 +158,29 @@ export function S12() {
         ))}
       </div>
       <Reveal delay={0.75}>
-        <div className="mt-4 flex items-center justify-between gap-4 rounded-xl hairline bg-[#0E1424]/70 px-5 py-3.5">
-          <p className="flex items-center gap-2.5 text-[12.5px] text-[#CBD5E1]">
+        <div className="mt-4 rounded-xl hairline bg-[#0E1424]/70 px-5 py-3">
+          <p className="flex items-center gap-2.5 text-[12px] text-[#CBD5E1]">
             <Flag size={15} className="shrink-0 text-[#10B981]" />
             Adaptações brasileiras mantidas: <span className="text-[#F8FAFC] font-semibold">DVA</span> (Lei 6.404/76) e particularidades da Lei das S.A.
+            <span className="text-[#64748B]">· Alcance varia por tipo de entidade — validar cliente a cliente.</span>
           </p>
-          <span className="flex items-center gap-3">
-            <span className="text-[11.5px] text-[#64748B]">Alcance da obrigatoriedade varia por tipo de entidade — validar cliente a cliente</span>
-            <Selo tipo="confirmar" />
-          </span>
+          <div className="mt-2"><Selo tipo="confirmar" /></div>
         </div>
       </Reveal>
     </SlideShell>
   );
 }
 
-/* ---------------- 13 · VIGÊNCIA ---------------- */
+/* ---------------- VIGÊNCIA ---------------- */
 export function S13() {
   const pontos = [
     { ano: "abr/2024", t: "Emissão da IFRS 18", d: "IASB publica a norma; início do debate global.", on: false },
     { ano: "2025", t: "CPC 51 · NBC TG 51 · CVM 237", d: "Convergência brasileira formalizada.", on: false },
     { ano: "2026", t: "Ano de preparação", d: "Mapeamento, de-para, pilotos — e o ano que virará comparativo reexpresso.", on: true },
-    { ano: "2027", t: "Adoção obrigatória", d: "Exercícios iniciados em ou após 01/01/2027. Aplicação retrospectiva integral.", on: true },
+    { ano: "2027", t: "Adoção obrigatória", d: "Exercícios a partir de 01/01/2027 + reconciliação linha a linha do comparativo (IAS 1 → CPC 51).", on: true },
   ];
   return (
-    <SlideShell n={13} total={20} kicker="Vigência e transição" title={["2026 prepara · 2027 adota"]}
+    <SlideShell kicker="Vigência e transição" title={["2026 prepara · 2027 adota"]}
       subtitle="Aplicação antecipada é permitida (com divulgação). A transição é retrospectiva: o comparativo de 2026 entra no novo formato.">
       <div className="relative flex flex-1 items-center pt-2">
         <div className="absolute left-0 right-0 top-1/2 h-px bg-gradient-to-r from-transparent via-[rgba(0,229,255,0.4)] to-transparent" />
@@ -136,9 +200,9 @@ export function S13() {
       <Reveal delay={0.9}>
         <div className="mt-5 flex items-center gap-3 rounded-xl border border-[rgba(245,158,11,0.35)] bg-[rgba(245,158,11,0.07)] px-5 py-3">
           <CalendarClock size={16} className="shrink-0 text-[#F59E0B]" />
-          <p className="text-[13px] text-[#CBD5E1]">
-            <span className="font-semibold text-[#F8FAFC]">Por que 2026 importa:</span> o comparativo publicado em 2027 é o exercício de 2026 —
-            quem não reexpressar durante o ano vai reconstruir 12 meses de classificação sob pressão de prazo.
+          <p className="text-[12.5px] text-[#CBD5E1]">
+            <span className="font-semibold text-[#F8FAFC]">Por que 2026 importa:</span> o comparativo publicado em 2027 é o exercício de 2026 — quem não reexpressar durante o ano vai reconstruir 12 meses sob pressão.
+            Primeiras interinas no novo formato: <span className="text-[#F8FAFC]">mar/2027</span> · anuais completas: <span className="text-[#F8FAFC]">dez/2027</span>.
           </p>
         </div>
       </Reveal>
@@ -146,32 +210,32 @@ export function S13() {
   );
 }
 
-/* ---------------- 14 · QUESTOR ---------------- */
+/* ---------------- QUESTOR ---------------- */
 export function S14() {
   return (
-    <SlideShell n={14} total={20} kicker="Sistemas · ERP Questor" title={["“Precisamos mudar o plano de contas?”"]}
+    <SlideShell kicker="Sistemas · ERP Questor" title={["“Precisamos mudar o plano de contas?”"]}
       subtitle="Resposta ponderada: não automaticamente. A norma exige classificação e apresentação — não necessariamente contas novas."
       right={<Selo tipo="confirmar" />}>
       <div className="grid flex-1 grid-cols-2 gap-6 pt-2">
         <Reveal delay={0.3}>
           <Card className="h-full border-[rgba(16,185,129,0.35)]" glow="rgba(16,185,129,0.12)">
-            <p className="font-mono2 text-[11px] uppercase tracking-[0.24em] text-[#10B981]">Caminho provável — sem quebrar histórico</p>
-            <ul className="mt-3 space-y-2.5 text-[13px] leading-relaxed text-[#CBD5E1]">
-              <li className="flex gap-2"><span className="text-[#10B981]">—</span>Tabela de de-para: conta existente × categoria CPC 51.</li>
-              <li className="flex gap-2"><span className="text-[#10B981]">—</span>Parametrização no Questor por conta ou centro de resultado.</li>
-              <li className="flex gap-2"><span className="text-[#10B981]">—</span>Relatórios DRE/DFC remontados a partir do de-para.</li>
-              <li className="flex gap-2"><span className="text-[#10B981]">—</span>Histórico e comparabilidade interna preservados.</li>
+            <p className="font-mono2 text-[11px] uppercase tracking-[0.24em] text-[#10B981]">O que já existe no Questor hoje</p>
+            <ul className="mt-3 space-y-2.5 text-[12.5px] leading-relaxed text-[#CBD5E1]">
+              <li className="flex gap-2"><span className="text-[#10B981]">—</span>Rotina <span className="text-[#F8FAFC]">“Optante pelo IFRS”</span>: Operações › Contabilidade › Contabilidade Geral.</li>
+              <li className="flex gap-2"><span className="text-[#10B981]">—</span>Modelos de adoção: <span className="text-[#F8FAFC]">Normal (completa), PME e ITG</span>, com histórico por período.</li>
+              <li className="flex gap-2"><span className="text-[#10B981]">—</span><span className="text-[#F8FAFC]">“Controla Atividades”</span> já gera a DRE por atividade, em colunas separadas.</li>
+              <li className="flex gap-2"><span className="text-[#10B981]">—</span>Data de adoção é <span className="text-[#F8FAFC]">irreversível</span> — exige exercício anterior fechado e relatórios emitidos.</li>
             </ul>
           </Card>
         </Reveal>
         <Reveal delay={0.45}>
           <Card className="h-full border-[rgba(245,158,11,0.35)]" glow="rgba(245,158,11,0.10)">
-            <p className="font-mono2 text-[11px] uppercase tracking-[0.24em] text-[#F59E0B]">Quando pode exigir contas novas</p>
-            <ul className="mt-3 space-y-2.5 text-[13px] leading-relaxed text-[#CBD5E1]">
-              <li className="flex gap-2"><span className="text-[#F59E0B]">—</span>Contas “guarda-chuva” (ex.: outras despesas genéricas) precisam de desdobramento.</li>
-              <li className="flex gap-2"><span className="text-[#F59E0B]">—</span>Despesas por função exigem rateio de natureza rastreável.</li>
-              <li className="flex gap-2"><span className="text-[#F59E0B]">—</span>MPMs pedem campos/tags para reconciliação automática.</li>
-              <li className="flex gap-2"><span className="text-[#F59E0B]">—</span>Decisão final depende do roadmap do fornecedor.</li>
+            <p className="font-mono2 text-[11px] uppercase tracking-[0.24em] text-[#F59E0B]">O que ainda precisamos confirmar</p>
+            <ul className="mt-3 space-y-2.5 text-[12.5px] leading-relaxed text-[#CBD5E1]">
+              <li className="flex gap-2"><span className="text-[#F59E0B]">—</span>As <span className="text-[#F8FAFC]">5 categorias do CPC 51</span> nativas e o de-para conta × categoria.</li>
+              <li className="flex gap-2"><span className="text-[#F59E0B]">—</span>Subtotais obrigatórios automáticos na DRE (operacional; antes de financiamento e tributos).</li>
+              <li className="flex gap-2"><span className="text-[#F59E0B]">—</span>DFC reparametrizada (juros/dividendos) e MPMs com reconciliação.</li>
+              <li className="flex gap-2"><span className="text-[#F59E0B]">—</span>Comparativos de 2026 reexpressos e exportação do de-para.</li>
             </ul>
           </Card>
         </Reveal>
@@ -186,10 +250,10 @@ export function S14() {
   );
 }
 
-/* ---------------- 15 · MAPEAMENTO ---------------- */
+/* ---------------- MAPEAMENTO ---------------- */
 export function S15() {
   return (
-    <SlideShell n={15} total={20} kicker="De-para · exemplo" title={["Tabela de mapeamento de contas"]}
+    <SlideShell kicker="De-para · exemplo" title={["Tabela de mapeamento de contas"]}
       right={
         <span className="flex flex-col items-end gap-2">
           <Selo tipo="ficticio" />
