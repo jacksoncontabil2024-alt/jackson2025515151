@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { Download, DollarSign, Package, Users, TrendingUp, TrendingDown, Clock, CheckCircle, XCircle, Trash2, Plus, Edit, BarChart3, CreditCard, Wallet, Smartphone, Printer, User as UserIcon, RotateCcw, HardDrive } from "lucide-react";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "";
 const API = `${BACKEND_URL}/api`;
 
 function MainApp() {
