@@ -1301,22 +1301,28 @@ def _rotate_old_backups():
         logger.error(f"Erro ao rotacionar backups: {e}")
 
 
-async def run_automatic_backup():
-    """Generate an automatic backup ZIP and save it to BACKUP_DIR, then rotate old files."""
+async def run_automatic_backup(prefix: str = "backup"):
+    """Generate a backup ZIP and save it to BACKUP_DIR, then rotate old files.
+
+    `prefix` allows distinguishing the daily automatic backup ("backup_")
+    from a safety backup taken right before a destructive operation
+    ("backup_seguranca_").
+    """
     try:
         _ensure_backup_dir()
         zip_bytes = await build_full_backup_zip_bytes()
         timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
-        filename = f"backup_{timestamp}.zip"
+        filename = f"{prefix}_{timestamp}.zip"
         filepath = BACKUP_DIR / filename
         with open(filepath, "wb") as f:
             f.write(zip_bytes)
-        _rotate_old_backups()
-        logger.info(f"Backup automático criado: {filename}")
+        if prefix == "backup":
+            _rotate_old_backups()
+        logger.info(f"Backup criado: {filename}")
         await ws_manager.broadcast("backup_created", "backup", filename)
         return filename
     except Exception as e:
-        logger.error(f"Erro ao gerar backup automático: {e}")
+        logger.error(f"Erro ao gerar backup: {e}")
         return None
 
 
@@ -1534,6 +1540,12 @@ async def restore_backup(filename: str):
 
 @api_router.delete("/data/clear")
 async def clear_all_data():
+    """Clear all data, but first automatically save a safety backup ZIP to
+    BACKUP_DIR (prefixed "backup_seguranca_") so the data can be restored
+    via /api/backups/restore/{filename} if this was triggered by mistake.
+    """
+    safety_backup_filename = await run_automatic_backup(prefix="backup_seguranca")
+
     await db.deliveries.delete_many({})
     await db.cash_entries.delete_many({})
     await db.deliverers.delete_many({})
@@ -1541,7 +1553,10 @@ async def clear_all_data():
     await db.clients_pool.delete_many({})
     await db.stock_items.delete_many({})
     await ws_manager.broadcast("data_cleared", "all")
-    return {"message": "All data cleared successfully"}
+    return {
+        "message": "All data cleared successfully",
+        "safety_backup": safety_backup_filename,
+    }
 
 
 # ==================== ROOT ENDPOINT ====================
