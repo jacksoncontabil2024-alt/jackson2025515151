@@ -1,7 +1,9 @@
-from fastapi import FastAPI, APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, APIRouter, HTTPException, WebSocket, WebSocketDisconnect, Depends, Request
 from fastapi.responses import StreamingResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
@@ -9,10 +11,12 @@ from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import io
 import zipfile
 import json
+import bcrypt
+import jwt
 from openpyxl import Workbook
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.lib import colors
@@ -29,6 +33,94 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# ==================== AUTH CONFIG ====================
+
+JWT_SECRET = os.environ.get('JWT_SECRET', 'cupim-na-telha-dev-secret-change-me')
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRATION_HOURS = 24
+
+DEFAULT_ADMIN_USERNAME = "admin"
+DEFAULT_ADMIN_PASSWORD = "admin123"
+
+# Paths that do not require authentication
+PUBLIC_PATHS = {"/api/auth/login", "/api/", ""}
+
+security = HTTPBearer(auto_error=False)
+
+
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+
+def verify_password(password: str, hashed_password: str) -> bool:
+    try:
+        return bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
+    except Exception:
+        return False
+
+
+def create_access_token(username: str) -> str:
+    payload = {
+        "sub": username,
+        "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS),
+        "iat": datetime.now(timezone.utc),
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+def decode_access_token(token: str) -> dict:
+    return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+
+
+async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)):
+    if credentials is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        payload = decode_access_token(credentials.credentials)
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expirado")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Token inválido")
+
+    username = payload.get("sub")
+    user = await db.users.find_one({"username": username}, {"_id": 0, "hashed_password": 0})
+    if not user:
+        raise HTTPException(status_code=401, detail="Usuário não encontrado")
+    return user
+
+
+class AuthMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        path = request.url.path
+
+        if request.method == "OPTIONS" or path in PUBLIC_PATHS:
+            return await call_next(request)
+
+        if path.startswith("/api/"):
+            auth_header = request.headers.get("Authorization")
+            if not auth_header or not auth_header.startswith("Bearer "):
+                return _unauthorized_response("Not authenticated")
+
+            token = auth_header.split(" ", 1)[1]
+            try:
+                payload = decode_access_token(token)
+            except jwt.ExpiredSignatureError:
+                return _unauthorized_response("Token expirado")
+            except jwt.InvalidTokenError:
+                return _unauthorized_response("Token inválido")
+
+            user = await db.users.find_one({"username": payload.get("sub")}, {"_id": 0})
+            if not user:
+                return _unauthorized_response("Usuário não encontrado")
+
+        return await call_next(request)
+
+
+def _unauthorized_response(detail: str):
+    from starlette.responses import JSONResponse
+    return JSONResponse(status_code=401, content={"detail": detail})
+
+
 # Create the main app without a prefix
 app = FastAPI()
 
@@ -39,6 +131,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(AuthMiddleware)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -78,6 +172,21 @@ ws_manager = ConnectionManager()
 
 @app.websocket("/api/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=4401)
+        return
+    try:
+        payload = decode_access_token(token)
+    except jwt.InvalidTokenError:
+        await websocket.close(code=4401)
+        return
+
+    user = await db.users.find_one({"username": payload.get("sub")}, {"_id": 0})
+    if not user:
+        await websocket.close(code=4401)
+        return
+
     await ws_manager.connect(websocket)
     try:
         while True:
@@ -224,6 +333,75 @@ class StockItemUpdate(BaseModel):
     price: Optional[float] = None
     quantity: Optional[int] = None
     sold: Optional[int] = None
+
+
+# User Model
+class User(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    username: str
+    hashed_password: str
+    role: str = "admin"
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    username: str
+    role: str
+
+
+class UserPublic(BaseModel):
+    username: str
+    role: str
+    created_at: str
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+# ==================== AUTH ENDPOINTS ====================
+
+@api_router.post("/auth/login", response_model=LoginResponse)
+async def login(credentials: LoginRequest):
+    user = await db.users.find_one({"username": credentials.username})
+    if not user or not verify_password(credentials.password, user["hashed_password"]):
+        raise HTTPException(status_code=401, detail="Usuário ou senha inválidos")
+
+    token = create_access_token(user["username"])
+    return LoginResponse(access_token=token, username=user["username"], role=user.get("role", "admin"))
+
+
+@api_router.get("/auth/me", response_model=UserPublic)
+async def get_me(current_user: dict = Depends(get_current_user)):
+    return UserPublic(
+        username=current_user["username"],
+        role=current_user.get("role", "admin"),
+        created_at=current_user.get("created_at", ""),
+    )
+
+
+@api_router.post("/auth/change-password")
+async def change_password(request: ChangePasswordRequest, current_user: dict = Depends(get_current_user)):
+    user = await db.users.find_one({"username": current_user["username"]})
+    if not user or not verify_password(request.current_password, user["hashed_password"]):
+        raise HTTPException(status_code=401, detail="Senha atual incorreta")
+
+    new_hashed = hash_password(request.new_password)
+    await db.users.update_one(
+        {"username": current_user["username"]},
+        {"$set": {"hashed_password": new_hashed}}
+    )
+    return {"message": "Senha alterada com sucesso"}
 
 
 # ==================== CASH ENDPOINTS ====================
@@ -1104,6 +1282,20 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+
+@app.on_event("startup")
+async def create_default_admin():
+    existing = await db.users.find_one({"username": DEFAULT_ADMIN_USERNAME})
+    if not existing:
+        default_user = User(
+            username=DEFAULT_ADMIN_USERNAME,
+            hashed_password=hash_password(DEFAULT_ADMIN_PASSWORD),
+            role="admin",
+        )
+        await db.users.insert_one(default_user.model_dump())
+        logger.info(f"Usuário admin padrão criado (username: {DEFAULT_ADMIN_USERNAME})")
+
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
