@@ -6,8 +6,9 @@ services:
     image: mongo:7.0
     container_name: cupim-mongodb
     restart: unless-stopped
-    ports:
-      - "0.0.0.0:27017:27017"
+    # MongoDB fica apenas na rede interna Docker; nao e exposto para fora
+    expose:
+      - "27017"
     volumes:
       - mongodb_data:/data/db
     environment:
@@ -22,16 +23,14 @@ services:
       dockerfile: Dockerfile.backend
     container_name: cupim-backend
     restart: unless-stopped
-    ports:
-      - "0.0.0.0:8001:8001"
+    # Backend fica apenas na rede interna Docker; nginx faz proxy de /api
+    expose:
+      - "8001"
     depends_on:
       - mongodb
     environment:
       - MONGO_URL=mongodb://mongodb:27017
       - DB_NAME=cupim_telha
-      # CORS_ORIGINS=* permite acesso de qualquer IP da rede local (necessario
-      # para o segundo notebook acessar o backend). Ajuste para uma lista
-      # separada por virgulas (ex: http://192.168.0.10:3000) se quiser restringir.
       - CORS_ORIGINS=${CORS_ORIGINS:-*}
       - JWT_SECRET=${JWT_SECRET:-cupim-na-telha-dev-secret-change-me}
       - BACKUP_DIR=/data/backups
