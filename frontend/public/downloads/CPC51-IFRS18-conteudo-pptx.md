@@ -21,7 +21,7 @@ Notas: Abertura — promessa da reunião: sair sabendo o que muda, quando muda e
 - O que é? IFRS 18 = norma global de apresentação (IASB, abr/2024); CPC 51 = versão brasileira (NBC TG 51 + Res. CVM 237), substitui o CPC 26 (R1). Não muda mensuração nem o lucro.
 - O que muda? DRE em 5 categorias, 2 subtotais obrigatórios, MPMs reconciliadas em nota, desagregação e DFC reparametrizada.
 - Quando entra em vigor? Exercícios a partir de 01/01/2027, retrospectivo (comparativo 2026 reexpresso). Antecipação permitida.
-- Abrir chamado no Questor? Sim — para levantar roadmap e de-para, não para trocar o plano de contas às cegas. [Confirmar com o fornecedor]
+- Abrir chamado no Questor? Sim — o sistema já tem a rotina "Optante pelo IFRS" (Operações › Contabilidade Geral, modelos Normal/PME/ITG); o chamado confirma quando as 5 categorias do CPC 51 entram nela. Data de adoção no sistema é irreversível. [Confirmar com o fornecedor]
 
 ## Slide 3 — Introdução
 # O que é a IFRS 18 — e o que é o CPC 51

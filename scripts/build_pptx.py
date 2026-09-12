@@ -215,7 +215,7 @@ qa = [
     ("O que é?", "A IFRS 18 é a nova norma global de apresentação das demonstrações (IASB, abr/2024). O CPC 51 é a versão brasileira — NBC TG 51 (CFC) e Resolução CVM nº 237 — e substitui o CPC 26 (R1). É norma de apresentação: não muda mensuração nem o lucro.", "DETALHES · SLIDE 03"),
     ("O que muda?", "DRE em 5 categorias, dois subtotais obrigatórios, MPMs reconciliadas em nota, fim das “outras despesas” genéricas e DFC reparametrizada. O lucro final não muda — a forma de apresentar, sim.", "SLIDES 04 A 13"),
     ("Quando entra em vigor?", "Exercícios iniciados em ou após 01/01/2027, com aplicação retrospectiva: o comparativo de 2026 já sai no novo formato. Aplicação antecipada permitida. Preparação: 2026.", "LINHA DO TEMPO · SLIDE 15"),
-    ("Abrir chamado no Questor para o plano de contas?", "Sim — abra já. Mas não para trocar o plano de contas às cegas: o chamado levanta o roadmap do fornecedor e a parametrização de de-para (conta × categoria), sem quebrar o histórico. [Confirmar com o fornecedor]", "MODELO PRONTO · SLIDE 19"),
+    ("Abrir chamado no Questor para o plano de contas?", "Sim — abra já. O sistema já tem a rotina “Optante pelo IFRS” (Operações › Contabilidade Geral) com modelos Normal/PME/ITG — o chamado confirma quando as 5 categorias do CPC 51 entram nela. Atenção: a data de adoção é irreversível no sistema. [Confirmar com o fornecedor]", "MODELO PRONTO · SLIDE 19"),
 ]
 pos = [(0.55, 1.95), (6.75, 1.95), (0.55, 4.55), (6.75, 4.55)]
 for (t, b, ref), (x, y) in zip(qa, pos):

@@ -126,7 +126,7 @@ export function S2B() {
     {
       icon: Ticket,
       q: "Abrir chamado no Questor para o plano de contas?",
-      a: <><span className="font-semibold text-[#00E5FF]">Sim — abra já.</span> Mas não para trocar o plano de contas às cegas: o chamado levanta o roadmap do fornecedor e a parametrização de de-para (conta × categoria), sem quebrar o histórico.</>,
+      a: <><span className="font-semibold text-[#00E5FF]">Sim — abra já.</span> O sistema já tem a rotina <span className="font-semibold text-[#F8FAFC]">“Optante pelo IFRS”</span> (Operações › Contabilidade Geral) com modelos Normal/PME/ITG — o chamado confirma quando as 5 categorias do CPC 51 entram nela. Atenção: a <span className="font-semibold text-[#F8FAFC]">data de adoção é irreversível</span> no sistema.</>,
       ref: "Modelo pronto · slide 19",
       selo: "confirmar",
     },
