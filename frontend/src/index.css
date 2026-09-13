@@ -86,6 +86,73 @@ code {
     }
 }
 
+/* ==================== TEMA ESCURO PARA TODAS AS TABELAS ==================== */
+table {
+    background-color: #1a1512;
+    color: #f0e6dc;
+}
+
+table thead,
+table thead.bg-gray-100,
+table thead.bg-gray-50 {
+    background-color: #2d1810 !important;
+}
+
+table thead th {
+    color: #f5ede4 !important;
+    border-color: #4a3528 !important;
+}
+
+table tbody tr {
+    background-color: #241d17;
+    color: #f0e6dc;
+    border-color: #4a3528 !important;
+}
+
+table tbody tr:nth-child(even) {
+    background-color: #2a2018;
+}
+
+table tbody tr.hover\:bg-gray-50:hover,
+table tbody tr:hover {
+    background-color: #3a2c22 !important;
+}
+
+/* Estados especiais de linha (estoque baixo/zerado) permanecem legiveis em tema escuro */
+table tbody tr.bg-red-50 {
+    background-color: rgba(220, 38, 38, 0.18) !important;
+}
+
+table tbody tr.bg-yellow-50 {
+    background-color: rgba(202, 138, 4, 0.18) !important;
+}
+
+table tbody tr.bg-green-100 {
+    background-color: rgba(22, 163, 74, 0.22) !important;
+}
+
+table td,
+table th {
+    border-color: #4a3528 !important;
+}
+
+table td {
+    color: #f0e6dc;
+}
+
+table .text-gray-500,
+table .text-gray-600 {
+    color: #c9b8a8 !important;
+}
+
+/* Badges "outline" usam text-foreground (escuro no tema global) - ajustar para fundo escuro da tabela */
+table .text-foreground {
+    color: #f0e6dc !important;
+    border-color: #6b5340 !important;
+}
+
+/* ==================== FIM TEMA ESCURO TABELAS ==================== */
+
 @layer base {
     [data-debug-wrapper="true"] {
         display: contents !important;
