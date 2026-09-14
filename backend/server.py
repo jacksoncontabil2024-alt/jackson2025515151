@@ -1,5 +1,6 @@
 from fastapi import FastAPI, APIRouter, HTTPException, WebSocket, WebSocketDisconnect, Depends, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -1511,6 +1512,11 @@ async def root():
 
 # Include the router in the main app
 app.include_router(api_router)
+
+# Serve React frontend static files (desktop build)
+STATIC_DIR = ROOT_DIR / "static"
+if STATIC_DIR.is_dir():
+    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
 
 # Configure logging
 logging.basicConfig(
